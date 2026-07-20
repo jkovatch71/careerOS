@@ -18,7 +18,7 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, available: true },
   { name: "Companies", href: "/companies", icon: Building2, available: true },
   { name: "Opportunities", href: "/opportunities", icon: BriefcaseBusiness, available: true },
-  { name: "Contacts", href: "/contacts", icon: Users, available: false },
+  { name: "Contacts", href: "/contacts", icon: Users, available: true },
   { name: "Resumes", href: "/resumes", icon: FileText, available: false },
   { name: "Outreach", href: "/outreach", icon: Send, available: false },
   { name: "Analytics", href: "/analytics", icon: BarChart3, available: false },

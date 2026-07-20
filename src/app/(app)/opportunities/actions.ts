@@ -11,6 +11,8 @@ export type OpportunityActionState = { error?: string };
 function valuesFromForm(formData: FormData) {
   return {
     company_id: formData.get("company_id"),
+    recruiting_firm_id: formData.get("recruiting_firm_id"),
+    recruiter_contact_id: formData.get("recruiter_contact_id"),
     role_title: formData.get("role_title"),
     job_url: formData.get("job_url"),
     source: formData.get("source"),
@@ -46,11 +48,37 @@ export async function createOpportunity(
   const { supabase, userId } = await authenticatedUser();
   const { data: company } = await supabase
     .from("companies")
-    .select("id")
+    .select("id, organization_type")
     .eq("id", parsed.data.company_id)
     .eq("user_id", userId)
     .maybeSingle();
-  if (!company) return { error: "Select a company you own." };
+  if (!company || !["employer", "both"].includes(company.organization_type)) {
+    return { error: "Select an employer organization you own." };
+  }
+
+  if (parsed.data.recruiting_firm_id) {
+    const { data: firm } = await supabase
+      .from("companies")
+      .select("id, organization_type")
+      .eq("id", parsed.data.recruiting_firm_id)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!firm || !["recruiting_firm", "both"].includes(firm.organization_type)) {
+      return { error: "Select a recruiting firm you own." };
+    }
+  }
+
+  if (parsed.data.recruiter_contact_id) {
+    const { data: recruiter } = await supabase
+      .from("contacts")
+      .select("id, company_id")
+      .eq("id", parsed.data.recruiter_contact_id)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!recruiter || (parsed.data.recruiting_firm_id && recruiter.company_id !== parsed.data.recruiting_firm_id)) {
+      return { error: "Select a recruiter associated with this firm." };
+    }
+  }
 
   const { error } = await supabase.from("opportunities").insert({
     ...parsed.data,
@@ -75,11 +103,37 @@ export async function updateOpportunity(
   const { supabase, userId } = await authenticatedUser();
   const { data: company } = await supabase
     .from("companies")
-    .select("id")
+    .select("id, organization_type")
     .eq("id", parsed.data.company_id)
     .eq("user_id", userId)
     .maybeSingle();
-  if (!company) return { error: "Select a company you own." };
+  if (!company || !["employer", "both"].includes(company.organization_type)) {
+    return { error: "Select an employer organization you own." };
+  }
+
+  if (parsed.data.recruiting_firm_id) {
+    const { data: firm } = await supabase
+      .from("companies")
+      .select("id, organization_type")
+      .eq("id", parsed.data.recruiting_firm_id)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!firm || !["recruiting_firm", "both"].includes(firm.organization_type)) {
+      return { error: "Select a recruiting firm you own." };
+    }
+  }
+
+  if (parsed.data.recruiter_contact_id) {
+    const { data: recruiter } = await supabase
+      .from("contacts")
+      .select("id, company_id")
+      .eq("id", parsed.data.recruiter_contact_id)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!recruiter || (parsed.data.recruiting_firm_id && recruiter.company_id !== parsed.data.recruiting_firm_id)) {
+      return { error: "Select a recruiter associated with this firm." };
+    }
+  }
 
   const { error } = await supabase
     .from("opportunities")

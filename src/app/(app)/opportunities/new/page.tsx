@@ -11,7 +11,10 @@ export const metadata: Metadata = { title: "New opportunity" };
 
 export default async function NewOpportunityPage() {
   const supabase = await createClient();
-  const { data: companies } = await supabase.from("companies").select("id, name").order("name");
+  const [{ data: companies }, { data: contacts }] = await Promise.all([
+    supabase.from("companies").select("id, name, organization_type").order("name"),
+    supabase.from("contacts").select("id, name, company_id, contact_type").order("name"),
+  ]);
 
   if (!companies?.length) redirect("/companies/new");
 
@@ -20,7 +23,7 @@ export default async function NewOpportunityPage() {
       <Link href="/opportunities" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ChevronLeft className="size-4" /> Opportunities</Link>
       <Card className="mt-5">
         <CardHeader><CardTitle>New opportunity</CardTitle><CardDescription>Capture a role and its next decision point.</CardDescription></CardHeader>
-        <CardContent><OpportunityForm companies={companies} /></CardContent>
+        <CardContent><OpportunityForm companies={companies} contacts={contacts ?? []} /></CardContent>
       </Card>
     </div>
   );

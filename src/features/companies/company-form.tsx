@@ -14,7 +14,7 @@ import {
   updateCompany,
   type CompanyActionState,
 } from "@/app/(app)/companies/actions";
-import { COMPANY_PRIORITIES, COMPANY_STATUSES, REMOTE_POLICIES } from "./constants";
+import { COMPANY_PRIORITIES, COMPANY_STATUSES, ORGANIZATION_TYPES, REMOTE_POLICIES } from "./constants";
 
 const initialState: CompanyActionState = {};
 
@@ -28,6 +28,17 @@ export function CompanyForm({ company }: { company?: Company }) {
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="name">Company name</Label>
           <Input id="name" name="name" defaultValue={company?.name} autoFocus required />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="organization_type">Organization type</Label>
+          <select
+            id="organization_type"
+            name="organization_type"
+            defaultValue={company?.organization_type ?? "employer"}
+            className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+          >
+            {ORGANIZATION_TYPES.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}
+          </select>
         </div>
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="website">Website</Label>

@@ -21,6 +21,7 @@ export type Database = {
           score: number | null;
           status: string | null;
           notes: string | null;
+          organization_type: string;
           created_at: string | null;
           updated_at: string | null;
           user_id: string | null;
@@ -36,6 +37,7 @@ export type Database = {
           score?: number | null;
           status?: string | null;
           notes?: string | null;
+          organization_type?: string;
           created_at?: string | null;
           updated_at?: string | null;
           user_id?: string | null;
@@ -51,6 +53,7 @@ export type Database = {
           score?: number | null;
           status?: string | null;
           notes?: string | null;
+          organization_type?: string;
           created_at?: string | null;
           updated_at?: string | null;
           user_id?: string | null;
@@ -72,6 +75,8 @@ export type Database = {
           applied_at: string | null;
           next_action: string | null;
           next_action_at: string | null;
+          recruiter_contact_id: string | null;
+          recruiting_firm_id: string | null;
           notes: string | null;
           created_at: string | null;
           updated_at: string | null;
@@ -91,6 +96,8 @@ export type Database = {
           applied_at?: string | null;
           next_action?: string | null;
           next_action_at?: string | null;
+          recruiter_contact_id?: string | null;
+          recruiting_firm_id?: string | null;
           notes?: string | null;
           created_at?: string | null;
           updated_at?: string | null;
@@ -110,6 +117,8 @@ export type Database = {
           applied_at?: string | null;
           next_action?: string | null;
           next_action_at?: string | null;
+          recruiter_contact_id?: string | null;
+          recruiting_firm_id?: string | null;
           notes?: string | null;
           created_at?: string | null;
           updated_at?: string | null;
@@ -118,6 +127,67 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "opportunities_company_id_fkey";
+            columns: ["company_id"];
+            isOneToOne: false;
+            referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "opportunities_recruiting_firm_id_fkey";
+            columns: ["recruiting_firm_id"];
+            isOneToOne: false;
+            referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "opportunities_recruiter_contact_id_fkey";
+            columns: ["recruiter_contact_id"];
+            isOneToOne: false;
+            referencedRelation: "contacts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      contacts: {
+        Row: {
+          id: string;
+          company_id: string | null;
+          name: string;
+          title: string | null;
+          linkedin_url: string | null;
+          email: string | null;
+          contact_type: string | null;
+          notes: string | null;
+          created_at: string | null;
+          user_id: string | null;
+        };
+        Insert: {
+          id?: string;
+          company_id?: string | null;
+          name: string;
+          title?: string | null;
+          linkedin_url?: string | null;
+          email?: string | null;
+          contact_type?: string | null;
+          notes?: string | null;
+          created_at?: string | null;
+          user_id?: string | null;
+        };
+        Update: {
+          id?: string;
+          company_id?: string | null;
+          name?: string;
+          title?: string | null;
+          linkedin_url?: string | null;
+          email?: string | null;
+          contact_type?: string | null;
+          notes?: string | null;
+          created_at?: string | null;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "contacts_company_id_fkey";
             columns: ["company_id"];
             isOneToOne: false;
             referencedRelation: "companies";
@@ -135,3 +205,4 @@ export type Database = {
 
 export type Company = Database["public"]["Tables"]["companies"]["Row"];
 export type Opportunity = Database["public"]["Tables"]["opportunities"]["Row"];
+export type Contact = Database["public"]["Tables"]["contacts"]["Row"];

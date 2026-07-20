@@ -11,6 +11,12 @@ const nullableDate = z
 
 export const opportunitySchema = z.object({
   company_id: z.uuid("Select a company."),
+  recruiting_firm_id: z
+    .union([z.literal(""), z.uuid()])
+    .transform((value) => value || null),
+  recruiter_contact_id: z
+    .union([z.literal(""), z.uuid()])
+    .transform((value) => value || null),
   role_title: z.string().trim().min(1, "Role title is required.").max(180),
   job_url: z
     .union([z.literal(""), z.url("Enter a complete URL beginning with https://")])

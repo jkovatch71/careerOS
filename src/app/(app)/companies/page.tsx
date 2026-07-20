@@ -4,7 +4,7 @@ import { Building2, ExternalLink, Plus } from "lucide-react";
 
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { companyStatusLabel } from "@/features/companies/constants";
+import { companyStatusLabel, organizationTypeLabel } from "@/features/companies/constants";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +24,7 @@ export default async function CompaniesPage() {
           <p className="text-sm text-muted-foreground">Relationship intelligence</p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight md:text-3xl">Companies</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Build and prioritize the organizations in your career market.
+            Build and prioritize employers and recruiting firms in your career market.
           </p>
         </div>
         <Link href="/companies/new" className={cn(buttonVariants())}>
@@ -55,15 +55,15 @@ export default async function CompaniesPage() {
         </Card>
       ) : (
         <div className="mt-8 overflow-hidden rounded-xl border">
-          <div className="hidden grid-cols-[minmax(220px,2fr)_1fr_120px_100px_80px] gap-4 border-b bg-card/70 px-5 py-3 text-xs font-medium text-muted-foreground md:grid">
-            <span>Company</span><span>Industry</span><span>Status</span><span>Priority</span><span>Score</span>
+          <div className="hidden grid-cols-[minmax(220px,2fr)_1fr_130px_100px_80px] gap-4 border-b bg-card/70 px-5 py-3 text-xs font-medium text-muted-foreground md:grid">
+            <span>Organization</span><span>Type</span><span>Status</span><span>Priority</span><span>Score</span>
           </div>
           <div className="divide-y">
             {companies.map((company) => (
               <Link
                 key={company.id}
                 href={`/companies/${company.id}/edit`}
-                className="grid gap-3 bg-background px-5 py-4 transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring md:grid-cols-[minmax(220px,2fr)_1fr_120px_100px_80px] md:items-center md:gap-4"
+                className="grid gap-3 bg-background px-5 py-4 transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring md:grid-cols-[minmax(220px,2fr)_1fr_130px_100px_80px] md:items-center md:gap-4"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{company.name}</p>
@@ -74,7 +74,7 @@ export default async function CompaniesPage() {
                     </span>
                   ) : null}
                 </div>
-                <p className="text-sm text-muted-foreground">{company.industry ?? "—"}</p>
+                <p className="text-sm text-muted-foreground">{organizationTypeLabel(company.organization_type)}</p>
                 <span className="w-fit rounded-full border bg-muted/30 px-2 py-1 text-xs">
                   {companyStatusLabel(company.status)}
                 </span>

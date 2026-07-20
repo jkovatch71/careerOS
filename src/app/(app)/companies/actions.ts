@@ -11,6 +11,7 @@ export type CompanyActionState = { error?: string };
 function valuesFromForm(formData: FormData) {
   return {
     name: formData.get("name"),
+    organization_type: formData.get("organization_type"),
     website: formData.get("website"),
     industry: formData.get("industry"),
     employee_range: formData.get("employee_range"),

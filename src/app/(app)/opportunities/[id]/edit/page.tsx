@@ -13,9 +13,10 @@ export const metadata: Metadata = { title: "Edit opportunity" };
 export default async function EditOpportunityPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
-  const [{ data: opportunity }, { data: companies }] = await Promise.all([
+  const [{ data: opportunity }, { data: companies }, { data: contacts }] = await Promise.all([
     supabase.from("opportunities").select("*").eq("id", id).maybeSingle(),
-    supabase.from("companies").select("id, name").order("name"),
+    supabase.from("companies").select("id, name, organization_type").order("name"),
+    supabase.from("contacts").select("id, name, company_id, contact_type").order("name"),
   ]);
 
   if (!opportunity) notFound();
@@ -28,7 +29,7 @@ export default async function EditOpportunityPage({ params }: { params: Promise<
       </div>
       <Card className="mt-5">
         <CardHeader><CardTitle>{opportunity.role_title}</CardTitle><CardDescription>Update the stage, fit, and next action.</CardDescription></CardHeader>
-        <CardContent><OpportunityForm companies={companies ?? []} opportunity={opportunity} /></CardContent>
+        <CardContent><OpportunityForm companies={companies ?? []} contacts={contacts ?? []} opportunity={opportunity} /></CardContent>
       </Card>
     </div>
   );

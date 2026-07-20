@@ -14,7 +14,7 @@ export default async function OpportunitiesPage() {
   const supabase = await createClient();
   const { data: opportunities, error } = await supabase
     .from("opportunities")
-    .select("*, companies(id, name)")
+    .select("*, employer:companies!opportunities_company_id_fkey(id, name)")
     .order("updated_at", { ascending: false, nullsFirst: false });
 
   return (
@@ -48,7 +48,7 @@ export default async function OpportunitiesPage() {
             {opportunities.map((opportunity) => (
               <Link key={opportunity.id} href={`/opportunities/${opportunity.id}/edit`} className="grid gap-3 bg-background px-5 py-4 transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring md:grid-cols-[minmax(220px,2fr)_1fr_130px_90px_150px] md:items-center md:gap-4">
                 <div className="min-w-0"><p className="truncate text-sm font-medium">{opportunity.role_title}</p><p className="mt-1 text-xs text-muted-foreground">{opportunity.source ?? "Source not set"}</p></div>
-                <p className="truncate text-sm text-muted-foreground">{opportunity.companies?.name ?? "—"}</p>
+                <p className="truncate text-sm text-muted-foreground">{opportunity.employer?.name ?? "—"}</p>
                 <span className="w-fit rounded-full border bg-muted/30 px-2 py-1 text-xs">{opportunityStageLabel(opportunity.stage)}</span>
                 <span className="font-mono text-sm">{opportunity.fit_score ?? "—"}</span>
                 <p className="truncate text-sm text-muted-foreground">{opportunity.next_action ?? "—"}</p>

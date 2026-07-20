@@ -1,11 +1,12 @@
 import { z } from "zod";
 
-import { COMPANY_PRIORITIES, COMPANY_STATUSES, REMOTE_POLICIES } from "./constants";
+import { COMPANY_PRIORITIES, COMPANY_STATUSES, ORGANIZATION_TYPES, REMOTE_POLICIES } from "./constants";
 
 const optionalText = z.string().trim().max(5000).transform((value) => value || null);
 
 export const companySchema = z.object({
   name: z.string().trim().min(1, "Company name is required.").max(160),
+  organization_type: z.enum(ORGANIZATION_TYPES.map((type) => type.value)),
   website: z
     .union([z.literal(""), z.url("Enter a complete URL beginning with https://")])
     .transform((value) => value || null),
