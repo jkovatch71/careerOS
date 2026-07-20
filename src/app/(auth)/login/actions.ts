@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { env } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 
 const credentialsSchema = z.object({
@@ -41,7 +42,12 @@ export async function signUp(_: AuthState, formData: FormData): Promise<AuthStat
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.signUp(parsed.data);
+  const { data, error } = await supabase.auth.signUp({
+    ...parsed.data,
+    options: {
+      emailRedirectTo: `${env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+    },
+  });
 
   if (error) return { error: error.message };
   if (!data.session) {
