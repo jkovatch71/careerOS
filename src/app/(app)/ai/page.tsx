@@ -1,0 +1,42 @@
+import type { Metadata } from "next";
+import { BrainCircuit, ShieldCheck, WalletCards } from "lucide-react";
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ConnectionCheck } from "@/features/ai/connection-check";
+
+export const metadata: Metadata = { title: "AI Setup" };
+
+export default function AiPage() {
+  return (
+    <div className="mx-auto max-w-4xl">
+      <div>
+        <p className="text-sm text-muted-foreground">Sprint 4</p>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight md:text-3xl">AI workspace</h1>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+          Verify the private Workers AI connection before enabling job parsing and resume matching.
+        </p>
+      </div>
+
+      <div className="mt-8 grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base"><BrainCircuit className="size-4 text-primary" /> Connection check</CardTitle>
+            <CardDescription>This sends one very small prompt only when you click the button.</CardDescription>
+          </CardHeader>
+          <CardContent><ConnectionCheck /></CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Usage safeguards</CardTitle>
+            <CardDescription>Designed around Cloudflare&apos;s free daily allowance.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4 text-sm">
+            <div className="flex gap-3"><ShieldCheck className="mt-0.5 size-4 shrink-0 text-muted-foreground" /><div><p className="font-medium">Server-only credentials</p><p className="mt-1 text-xs leading-5 text-muted-foreground">Your API token is never sent to the browser.</p></div></div>
+            <div className="flex gap-3"><WalletCards className="mt-0.5 size-4 shrink-0 text-muted-foreground" /><div><p className="font-medium">Manual AI actions</p><p className="mt-1 text-xs leading-5 text-muted-foreground">Career OS will not run AI automatically or in the background.</p></div></div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
+  BrainCircuit,
   BriefcaseBusiness,
   Building2,
   FileText,
@@ -25,6 +26,7 @@ const navigation = [
   { name: "Resumes", href: "/resumes", icon: FileText, available: true },
   { name: "Outreach", href: "/outreach", icon: Send, available: true },
   { name: "Follow-ups", href: "/follow-ups", icon: ListTodo, available: true },
+  { name: "AI Workspace", href: "/ai", icon: BrainCircuit, available: true },
   { name: "Analytics", href: "/analytics", icon: BarChart3, available: false },
 ] as const;
 
