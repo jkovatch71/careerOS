@@ -6,6 +6,7 @@ import { LoaderCircle } from "lucide-react";
 
 import { createOpportunity, updateOpportunity, type OpportunityActionState } from "@/app/(app)/opportunities/actions";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { DateTimeInput } from "@/components/ui/date-time-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Company, Contact, Opportunity } from "@/lib/supabase/database.types";
@@ -154,11 +155,11 @@ export function OpportunityForm({
         </div>
         <div className="space-y-2">
           <Label htmlFor="applied_at">Applied at</Label>
-          <Input id="applied_at" name="applied_at" type="datetime-local" defaultValue={dateTimeValue(opportunity?.applied_at ?? null)} />
+          <DateTimeInput id="applied_at" name="applied_at" defaultValue={dateTimeValue(opportunity?.applied_at ?? null)} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="next_action_at">Next action due</Label>
-          <Input id="next_action_at" name="next_action_at" type="datetime-local" defaultValue={dateTimeValue(opportunity?.next_action_at ?? null)} />
+          <DateTimeInput id="next_action_at" name="next_action_at" defaultValue={dateTimeValue(opportunity?.next_action_at ?? null)} />
         </div>
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="next_action">Next action</Label>
