@@ -81,6 +81,7 @@ export type Database = {
           company_id: string | null;
           role_title: string;
           job_url: string | null;
+          job_description: string | null;
           source: string | null;
           promoted_by_hirer: boolean | null;
           easy_apply: boolean | null;
@@ -103,6 +104,7 @@ export type Database = {
           company_id?: string | null;
           role_title: string;
           job_url?: string | null;
+          job_description?: string | null;
           source?: string | null;
           promoted_by_hirer?: boolean | null;
           easy_apply?: boolean | null;
@@ -125,6 +127,7 @@ export type Database = {
           company_id?: string | null;
           role_title?: string;
           job_url?: string | null;
+          job_description?: string | null;
           source?: string | null;
           promoted_by_hirer?: boolean | null;
           easy_apply?: boolean | null;
@@ -352,6 +355,45 @@ export type Database = {
           { foreignKeyName: "follow_ups_contact_id_fkey"; columns: ["contact_id"]; isOneToOne: false; referencedRelation: "contacts"; referencedColumns: ["id"] },
         ];
       };
+      ai_analyses: {
+        Row: {
+          id: string;
+          user_id: string;
+          opportunity_id: string;
+          resume_id: string | null;
+          analysis_type: string;
+          input_hash: string;
+          model: string;
+          result: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          opportunity_id: string;
+          resume_id?: string | null;
+          analysis_type: string;
+          input_hash: string;
+          model: string;
+          result: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          opportunity_id?: string;
+          resume_id?: string | null;
+          analysis_type?: string;
+          input_hash?: string;
+          model?: string;
+          result?: Json;
+          created_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: "ai_analyses_opportunity_id_fkey"; columns: ["opportunity_id"]; isOneToOne: false; referencedRelation: "opportunities"; referencedColumns: ["id"] },
+          { foreignKeyName: "ai_analyses_resume_id_fkey"; columns: ["resume_id"]; isOneToOne: false; referencedRelation: "resumes"; referencedColumns: ["id"] },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -366,3 +408,4 @@ export type Contact = Database["public"]["Tables"]["contacts"]["Row"];
 export type Resume = Database["public"]["Tables"]["resumes"]["Row"];
 export type Outreach = Database["public"]["Tables"]["outreach"]["Row"];
 export type FollowUp = Database["public"]["Tables"]["follow_ups"]["Row"];
+export type AiAnalysis = Database["public"]["Tables"]["ai_analyses"]["Row"];

@@ -3,10 +3,22 @@ import { BrainCircuit, ShieldCheck, WalletCards } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConnectionCheck } from "@/features/ai/connection-check";
+import { JobDescriptionParser } from "@/features/ai/job-description-parser";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "AI Setup" };
 
-export default function AiPage() {
+export default async function AiPage() {
+  const supabase = await createClient();
+  const { data: opportunities } = await supabase
+    .from("opportunities")
+    .select("id, role_title, job_description, employer:companies!opportunities_company_id_fkey(name)")
+    .order("updated_at", { ascending: false, nullsFirst: false });
+  const opportunityOptions = (opportunities ?? []).map((opportunity) => ({
+    id: opportunity.id,
+    label: `${opportunity.role_title}${opportunity.employer?.name ? ` — ${opportunity.employer.name}` : ""}`,
+    jobDescription: opportunity.job_description,
+  }));
   return (
     <div className="mx-auto max-w-4xl">
       <div>
@@ -37,6 +49,16 @@ export default function AiPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="mt-4">
+        <CardHeader>
+          <CardTitle className="text-base">Job description parser</CardTitle>
+          <CardDescription>Turn a pasted posting into a structured executive-level brief and save it to the opportunity.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {opportunityOptions.length ? <JobDescriptionParser opportunities={opportunityOptions} /> : <p className="text-sm text-muted-foreground">Add an opportunity before analyzing a job description.</p>}
+        </CardContent>
+      </Card>
     </div>
   );
 }
