@@ -8,7 +8,7 @@ export const CLOUDFLARE_AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 
 const cloudflareResponseSchema = z.object({
   success: z.boolean(),
-  result: z.object({ response: z.string() }).optional(),
+  result: z.object({ response: z.unknown() }).optional(),
   errors: z.array(z.object({ message: z.string().optional() })).optional(),
 });
 
@@ -38,7 +38,7 @@ async function runCloudflareAi(body: Record<string, unknown>) {
     throw new Error(message || "Cloudflare Workers AI rejected the request.");
   }
 
-  return payload.data.result.response.trim();
+  return payload.data.result.response;
 }
 
 export async function generateStructuredResponse<T>({
@@ -64,11 +64,13 @@ export async function generateStructuredResponse<T>({
     temperature: 0.1,
   });
 
-  let parsedJson: unknown;
-  try {
-    parsedJson = JSON.parse(response);
-  } catch {
-    throw new Error("Workers AI returned an invalid structured response. Please try again.");
+  let parsedJson: unknown = response;
+  if (typeof response === "string") {
+    try {
+      parsedJson = JSON.parse(response);
+    } catch {
+      throw new Error("Workers AI returned an invalid structured response. Please try again.");
+    }
   }
 
   const parsed = outputSchema.safeParse(parsedJson);
@@ -86,5 +88,8 @@ export async function testCloudflareAiConnection() {
     temperature: 0,
   });
 
-  return { model: CLOUDFLARE_AI_MODEL, response };
+  return {
+    model: CLOUDFLARE_AI_MODEL,
+    response: typeof response === "string" ? response.trim() : "Career OS connected",
+  };
 }
