@@ -17,7 +17,11 @@ function valuesFromForm(formData: FormData) {
     employee_range: formData.get("employee_range"),
     remote_policy: formData.get("remote_policy"),
     priority: formData.get("priority"),
-    score: formData.get("score"),
+    role_alignment_score: formData.get("role_alignment_score"),
+    compensation_score: formData.get("compensation_score"),
+    work_model_score: formData.get("work_model_score"),
+    company_outlook_score: formData.get("company_outlook_score"),
+    culture_interest_score: formData.get("culture_interest_score"),
     status: formData.get("status"),
     notes: formData.get("notes"),
   };

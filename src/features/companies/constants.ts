@@ -22,6 +22,42 @@ export const REMOTE_POLICIES = [
   "Unknown",
 ] as const;
 
+export const COMPANY_SCORE_FACTORS = [
+  {
+    key: "role_alignment_score",
+    label: "Role alignment",
+    description: "Leadership scope and relevance to your experience.",
+  },
+  {
+    key: "compensation_score",
+    label: "Compensation potential",
+    description: "Likelihood of meeting your compensation goals.",
+  },
+  {
+    key: "work_model_score",
+    label: "Work-model fit",
+    description: "Remote policy, schedule, and location compatibility.",
+  },
+  {
+    key: "company_outlook_score",
+    label: "Company outlook",
+    description: "Stability, growth, leadership, and market position.",
+  },
+  {
+    key: "culture_interest_score",
+    label: "Interest and culture",
+    description: "Personal interest, values, and likely culture fit.",
+  },
+] as const;
+
+export const COMPANY_SCORE_OPTIONS = [
+  { value: 0, label: "Poor" },
+  { value: 5, label: "Limited" },
+  { value: 10, label: "Moderate" },
+  { value: 15, label: "Strong" },
+  { value: 20, label: "Exceptional" },
+] as const;
+
 export function companyStatusLabel(value: string | null) {
   return COMPANY_STATUSES.find((status) => status.value === value)?.label ?? "Target";
 }

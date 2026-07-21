@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { LoaderCircle } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -14,13 +14,32 @@ import {
   updateCompany,
   type CompanyActionState,
 } from "@/app/(app)/companies/actions";
-import { COMPANY_PRIORITIES, COMPANY_STATUSES, ORGANIZATION_TYPES, REMOTE_POLICIES } from "./constants";
+import {
+  COMPANY_PRIORITIES,
+  COMPANY_SCORE_FACTORS,
+  COMPANY_SCORE_OPTIONS,
+  COMPANY_STATUSES,
+  ORGANIZATION_TYPES,
+  REMOTE_POLICIES,
+} from "./constants";
 
 const initialState: CompanyActionState = {};
+type ScoreFactorKey = (typeof COMPANY_SCORE_FACTORS)[number]["key"];
 
 export function CompanyForm({ company }: { company?: Company }) {
   const action = company ? updateCompany.bind(null, company.id) : createCompany;
   const [state, formAction, pending] = useActionState(action, initialState);
+  const [scores, setScores] = useState<Record<ScoreFactorKey, string>>({
+    role_alignment_score: company?.role_alignment_score?.toString() ?? "",
+    compensation_score: company?.compensation_score?.toString() ?? "",
+    work_model_score: company?.work_model_score?.toString() ?? "",
+    company_outlook_score: company?.company_outlook_score?.toString() ?? "",
+    culture_interest_score: company?.culture_interest_score?.toString() ?? "",
+  });
+  const scoreValues = Object.values(scores);
+  const strategicScore = scoreValues.every((score) => score !== "")
+    ? scoreValues.reduce((total, score) => total + Number(score), 0)
+    : null;
 
   return (
     <form action={formAction} className="space-y-5">
@@ -40,7 +59,7 @@ export function CompanyForm({ company }: { company?: Company }) {
             {ORGANIZATION_TYPES.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}
           </select>
         </div>
-        <div className="space-y-2 sm:col-span-2">
+        <div className="space-y-2">
           <Label htmlFor="website">Website</Label>
           <Input
             id="website"
@@ -99,17 +118,49 @@ export function CompanyForm({ company }: { company?: Company }) {
             {COMPANY_PRIORITIES.map((priority) => <option key={priority}>{priority}</option>)}
           </select>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="score">Strategic score</Label>
-          <Input
-            id="score"
-            name="score"
-            type="number"
-            min={0}
-            max={100}
-            placeholder="0–100"
-            defaultValue={company?.score ?? ""}
-          />
+        <div className="space-y-3 rounded-lg border bg-muted/10 p-4 sm:col-span-2">
+          <div>
+            <div className="flex items-center justify-between gap-4">
+              <Label>Strategic scorecard</Label>
+              <span className="font-mono text-sm font-medium">
+                {strategicScore === null ? "Not scored" : `${strategicScore} / 100`}
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Complete all five dimensions to calculate the company score.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {COMPANY_SCORE_FACTORS.map((factor) => (
+              <div key={factor.key} className="rounded-md border bg-background p-3">
+                <Label htmlFor={factor.key}>{factor.label}</Label>
+                <p className="mt-1 min-h-8 text-xs leading-4 text-muted-foreground">{factor.description}</p>
+                <select
+                  id={factor.key}
+                  name={factor.key}
+                  value={scores[factor.key]}
+                  onChange={(event) => setScores((current) => ({
+                    ...current,
+                    [factor.key]: event.target.value,
+                  }))}
+                  className="mt-2 h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+                >
+                  <option value="">Not scored</option>
+                  {COMPANY_SCORE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.value} — {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))}
+            <div className="flex min-h-28 flex-col items-center justify-center rounded-md border bg-background p-3 text-center">
+              <span className="font-mono text-2xl font-semibold">
+                {strategicScore ?? "—"}
+              </span>
+              <span className="mt-1 text-xs text-muted-foreground">Strategic score / 100</span>
+            </div>
+          </div>
         </div>
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="notes">Notes</Label>

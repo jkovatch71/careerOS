@@ -19,6 +19,11 @@ export type Database = {
           remote_policy: string | null;
           priority: string | null;
           score: number | null;
+          role_alignment_score: number | null;
+          compensation_score: number | null;
+          work_model_score: number | null;
+          company_outlook_score: number | null;
+          culture_interest_score: number | null;
           status: string | null;
           notes: string | null;
           organization_type: string;
@@ -35,6 +40,11 @@ export type Database = {
           remote_policy?: string | null;
           priority?: string | null;
           score?: number | null;
+          role_alignment_score?: number | null;
+          compensation_score?: number | null;
+          work_model_score?: number | null;
+          company_outlook_score?: number | null;
+          culture_interest_score?: number | null;
           status?: string | null;
           notes?: string | null;
           organization_type?: string;
@@ -51,6 +61,11 @@ export type Database = {
           remote_policy?: string | null;
           priority?: string | null;
           score?: number | null;
+          role_alignment_score?: number | null;
+          compensation_score?: number | null;
+          work_model_score?: number | null;
+          company_outlook_score?: number | null;
+          culture_interest_score?: number | null;
           status?: string | null;
           notes?: string | null;
           organization_type?: string;
