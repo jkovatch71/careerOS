@@ -307,6 +307,51 @@ export type Database = {
           },
         ];
       };
+      follow_ups: {
+        Row: {
+          id: string;
+          opportunity_id: string | null;
+          contact_id: string | null;
+          follow_up_type: string | null;
+          due_at: string;
+          completed_at: string | null;
+          status: string;
+          notes: string | null;
+          created_at: string | null;
+          updated_at: string | null;
+          user_id: string | null;
+        };
+        Insert: {
+          id?: string;
+          opportunity_id?: string | null;
+          contact_id?: string | null;
+          follow_up_type?: string | null;
+          due_at: string;
+          completed_at?: string | null;
+          status?: string;
+          notes?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+          user_id?: string | null;
+        };
+        Update: {
+          id?: string;
+          opportunity_id?: string | null;
+          contact_id?: string | null;
+          follow_up_type?: string | null;
+          due_at?: string;
+          completed_at?: string | null;
+          status?: string;
+          notes?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+          user_id?: string | null;
+        };
+        Relationships: [
+          { foreignKeyName: "follow_ups_opportunity_id_fkey"; columns: ["opportunity_id"]; isOneToOne: false; referencedRelation: "opportunities"; referencedColumns: ["id"] },
+          { foreignKeyName: "follow_ups_contact_id_fkey"; columns: ["contact_id"]; isOneToOne: false; referencedRelation: "contacts"; referencedColumns: ["id"] },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -320,3 +365,4 @@ export type Opportunity = Database["public"]["Tables"]["opportunities"]["Row"];
 export type Contact = Database["public"]["Tables"]["contacts"]["Row"];
 export type Resume = Database["public"]["Tables"]["resumes"]["Row"];
 export type Outreach = Database["public"]["Tables"]["outreach"]["Row"];
+export type FollowUp = Database["public"]["Tables"]["follow_ups"]["Row"];

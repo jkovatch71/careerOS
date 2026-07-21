@@ -7,6 +7,7 @@ import {
   BriefcaseBusiness,
   Building2,
   FileText,
+  ListTodo,
   LayoutDashboard,
   LayoutPanelTop,
   Send,
@@ -23,6 +24,7 @@ const navigation = [
   { name: "Contacts", href: "/contacts", icon: Users, available: true },
   { name: "Resumes", href: "/resumes", icon: FileText, available: true },
   { name: "Outreach", href: "/outreach", icon: Send, available: true },
+  { name: "Follow-ups", href: "/follow-ups", icon: ListTodo, available: true },
   { name: "Analytics", href: "/analytics", icon: BarChart3, available: false },
 ] as const;
 

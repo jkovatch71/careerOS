@@ -1,0 +1,22 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { Check, Clock3, Plus, RotateCcw } from "lucide-react";
+import { setFollowUpCompletion } from "@/app/(app)/follow-ups/actions";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { createClient } from "@/lib/supabase/server";
+import { cn } from "@/lib/utils";
+
+export const metadata: Metadata = { title: "Follow-ups" };
+export default async function FollowUpsPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
+  const { view } = await searchParams;
+  const completed = view === "completed";
+  const supabase = await createClient();
+  const { data: items, error } = await supabase.from("follow_ups").select("*, opportunity:opportunities(id, role_title), contact:contacts(id, name)").eq("status", completed ? "completed" : "pending").order(completed ? "completed_at" : "due_at", { ascending: completed ? false : true });
+  // A request-time snapshot keeps every overdue comparison on this server render consistent.
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now();
+  return <div className="mx-auto max-w-7xl"><div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-sm text-muted-foreground">Next actions</p><h1 className="mt-1 text-2xl font-semibold tracking-tight md:text-3xl">Follow-ups</h1><p className="mt-2 text-sm text-muted-foreground">Keep every relationship and opportunity moving forward.</p></div><div className="flex items-center gap-2"><div className="flex rounded-md border p-0.5"><Link href="/follow-ups" className={cn(buttonVariants({ variant: completed ? "ghost" : "outline", size: "sm" }), !completed && "border-0 bg-muted")}>Pending</Link><Link href="/follow-ups?view=completed" className={cn(buttonVariants({ variant: completed ? "outline" : "ghost", size: "sm" }), completed && "border-0 bg-muted")}>Completed</Link></div><Link href="/follow-ups/new" className={cn(buttonVariants())}><Plus className="size-4" /> Add follow-up</Link></div></div>
+  {error ? <Card className="mt-8 border-destructive/40"><CardContent className="p-6 text-sm text-destructive">Career OS could not load follow-ups.</CardContent></Card> : items.length === 0 ? <Card className="mt-8"><CardContent className="flex min-h-72 flex-col items-center justify-center text-center"><span className="flex size-11 items-center justify-center rounded-lg border bg-muted/30"><Clock3 className="size-5 text-muted-foreground" /></span><h2 className="mt-4 text-sm font-medium">{completed ? "No completed follow-ups" : "No pending follow-ups"}</h2><p className="mt-2 max-w-sm text-xs leading-5 text-muted-foreground">{completed ? "Completed tasks will be preserved here." : "Create a next action for a contact or opportunity."}</p>{!completed ? <Link href="/follow-ups/new" className={cn(buttonVariants({ size: "sm" }), "mt-5")}><Plus className="size-4" /> Add follow-up</Link> : null}</CardContent></Card> : <div className="mt-8 space-y-3">{items.map((item) => { const overdue = !completed && new Date(item.due_at).getTime() < now; return <div key={item.id} className={cn("grid gap-4 rounded-xl border bg-card p-4 md:grid-cols-[minmax(220px,1.5fr)_1fr_1fr_170px_auto] md:items-center", overdue && "border-destructive/40")}><Link href={`/follow-ups/${item.id}/edit`} className="min-w-0"><div className="flex items-center gap-2"><p className="truncate text-sm font-medium">{item.follow_up_type ?? "Follow-up"}</p>{overdue ? <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-medium text-destructive">Overdue</span> : null}</div><p className="mt-1 truncate text-xs text-muted-foreground">{item.notes ?? "No notes"}</p></Link><p className="truncate text-sm text-muted-foreground">{item.contact?.name ?? "—"}</p><p className="truncate text-sm text-muted-foreground">{item.opportunity?.role_title ?? "—"}</p><p className={cn("text-sm text-muted-foreground", overdue && "text-destructive")}>{new Date(item.due_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</p><form action={setFollowUpCompletion.bind(null, item.id, !completed)}><Button type="submit" variant="outline" size="sm">{completed ? <RotateCcw className="size-3.5" /> : <Check className="size-3.5" />}{completed ? "Reopen" : "Complete"}</Button></form></div>; })}</div>}
+  </div>;
+}
