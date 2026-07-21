@@ -11,6 +11,9 @@ const nullableDate = z
 
 export const opportunitySchema = z.object({
   company_id: z.uuid("Select a company."),
+  primary_contact_id: z
+    .union([z.literal(""), z.uuid()])
+    .transform((value) => value || null),
   recruiting_firm_id: z
     .union([z.literal(""), z.uuid()])
     .transform((value) => value || null),

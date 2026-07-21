@@ -52,11 +52,11 @@ export function ContactForm({ companies, contact }: { companies: Pick<Company, "
         </div>
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="notes">Notes</Label>
-          <textarea id="notes" name="notes" rows={4} defaultValue={contact?.notes ?? ""} className="w-full resize-y rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/30" />
+          <textarea id="notes" name="notes" rows={3} defaultValue={contact?.notes ?? ""} className="w-full resize-y rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/30" />
         </div>
       </div>
       {state.error ? <p role="alert" className="text-sm text-destructive">{state.error}</p> : null}
-      <div className="flex items-center justify-end gap-3 border-t pt-6">
+      <div className="flex items-center justify-end gap-3 border-t pt-5">
         <Link href="/contacts" className={cn(buttonVariants({ variant: "ghost" }))}>Cancel</Link>
         <Button type="submit" disabled={pending}>{pending ? <LoaderCircle className="size-4 animate-spin" /> : null}{contact ? "Save changes" : "Create contact"}</Button>
       </div>

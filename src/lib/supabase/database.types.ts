@@ -75,6 +75,7 @@ export type Database = {
           applied_at: string | null;
           next_action: string | null;
           next_action_at: string | null;
+          primary_contact_id: string | null;
           recruiter_contact_id: string | null;
           recruiting_firm_id: string | null;
           notes: string | null;
@@ -96,6 +97,7 @@ export type Database = {
           applied_at?: string | null;
           next_action?: string | null;
           next_action_at?: string | null;
+          primary_contact_id?: string | null;
           recruiter_contact_id?: string | null;
           recruiting_firm_id?: string | null;
           notes?: string | null;
@@ -117,6 +119,7 @@ export type Database = {
           applied_at?: string | null;
           next_action?: string | null;
           next_action_at?: string | null;
+          primary_contact_id?: string | null;
           recruiter_contact_id?: string | null;
           recruiting_firm_id?: string | null;
           notes?: string | null;
@@ -142,6 +145,13 @@ export type Database = {
           {
             foreignKeyName: "opportunities_recruiter_contact_id_fkey";
             columns: ["recruiter_contact_id"];
+            isOneToOne: false;
+            referencedRelation: "contacts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "opportunities_primary_contact_id_fkey";
+            columns: ["primary_contact_id"];
             isOneToOne: false;
             referencedRelation: "contacts";
             referencedColumns: ["id"];

@@ -11,8 +11,9 @@ export type OpportunityActionState = { error?: string };
 function valuesFromForm(formData: FormData) {
   return {
     company_id: formData.get("company_id"),
-    recruiting_firm_id: formData.get("recruiting_firm_id"),
-    recruiter_contact_id: formData.get("recruiter_contact_id"),
+    primary_contact_id: formData.get("primary_contact_id") ?? "",
+    recruiting_firm_id: formData.get("recruiting_firm_id") ?? "",
+    recruiter_contact_id: formData.get("recruiter_contact_id") ?? "",
     role_title: formData.get("role_title"),
     job_url: formData.get("job_url"),
     source: formData.get("source"),
@@ -54,6 +55,18 @@ export async function createOpportunity(
     .maybeSingle();
   if (!company || !["employer", "both"].includes(company.organization_type)) {
     return { error: "Select an employer organization you own." };
+  }
+
+  if (parsed.data.primary_contact_id) {
+    const { data: primaryContact } = await supabase
+      .from("contacts")
+      .select("id, company_id")
+      .eq("id", parsed.data.primary_contact_id)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!primaryContact || primaryContact.company_id !== parsed.data.company_id) {
+      return { error: "Select a primary contact associated with this employer." };
+    }
   }
 
   if (parsed.data.recruiting_firm_id) {
@@ -109,6 +122,18 @@ export async function updateOpportunity(
     .maybeSingle();
   if (!company || !["employer", "both"].includes(company.organization_type)) {
     return { error: "Select an employer organization you own." };
+  }
+
+  if (parsed.data.primary_contact_id) {
+    const { data: primaryContact } = await supabase
+      .from("contacts")
+      .select("id, company_id")
+      .eq("id", parsed.data.primary_contact_id)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!primaryContact || primaryContact.company_id !== parsed.data.company_id) {
+      return { error: "Select a primary contact associated with this employer." };
+    }
   }
 
   if (parsed.data.recruiting_firm_id) {

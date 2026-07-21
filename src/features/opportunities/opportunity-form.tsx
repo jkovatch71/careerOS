@@ -31,6 +31,8 @@ export function OpportunityForm({
     ? updateOpportunity.bind(null, opportunity.id)
     : createOpportunity;
   const [state, formAction, pending] = useActionState(action, initialState);
+  const [companyId, setCompanyId] = useState(opportunity?.company_id ?? "");
+  const [source, setSource] = useState(opportunity?.source ?? "");
   const [recruitingFirmId, setRecruitingFirmId] = useState(opportunity?.recruiting_firm_id ?? "");
   const employers = companies.filter((company) => ["employer", "both"].includes(company.organization_type));
   const firms = companies.filter((company) => ["recruiting_firm", "both"].includes(company.organization_type));
@@ -38,16 +40,28 @@ export function OpportunityForm({
     ["recruiter", "talent_acquisition"].includes(contact.contact_type ?? "")
     && (!recruitingFirmId || contact.company_id === recruitingFirmId),
   );
+  const primaryContacts = contacts.filter((contact) => contact.company_id === companyId);
 
   return (
-    <form action={formAction} className="space-y-6">
+    <form action={formAction} className="relative space-y-5">
+      <div className="flex flex-wrap gap-5 sm:absolute sm:-top-14 sm:right-0">
+        <label className="flex items-center gap-2 text-sm text-muted-foreground">
+          <input type="checkbox" name="promoted_by_hirer" defaultChecked={opportunity?.promoted_by_hirer ?? false} className="size-4 accent-primary" />
+          Promoted
+        </label>
+        <label className="flex items-center gap-2 text-sm text-muted-foreground">
+          <input type="checkbox" name="easy_apply" defaultChecked={opportunity?.easy_apply ?? false} className="size-4 accent-primary" />
+          Easy Apply
+        </label>
+      </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="company_id">Company</Label>
           <select
             id="company_id"
             name="company_id"
-            defaultValue={opportunity?.company_id ?? ""}
+            value={companyId}
+            onChange={(event) => setCompanyId(event.target.value)}
             required
             className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
           >
@@ -64,43 +78,61 @@ export function OpportunityForm({
           <Input id="job_url" name="job_url" type="url" placeholder="https://..." defaultValue={opportunity?.job_url ?? ""} />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="recruiting_firm_id">Recruiting firm</Label>
-          <select
-            id="recruiting_firm_id"
-            name="recruiting_firm_id"
-            value={recruitingFirmId}
-            onChange={(event) => setRecruitingFirmId(event.target.value)}
-            className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
-          >
-            <option value="">Direct opportunity</option>
-            {firms.map((firm) => <option key={firm.id} value={firm.id}>{firm.name}</option>)}
-          </select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="recruiter_contact_id">Primary recruiter</Label>
-          <select
-            id="recruiter_contact_id"
-            name="recruiter_contact_id"
-            key={recruitingFirmId}
-            defaultValue={opportunity?.recruiter_contact_id ?? ""}
-            className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
-          >
-            <option value="">Not specified</option>
-            {recruiters.map((contact) => <option key={contact.id} value={contact.id}>{contact.name}</option>)}
-          </select>
-        </div>
-        <div className="space-y-2">
           <Label htmlFor="source">Source</Label>
           <select
             id="source"
             name="source"
-            defaultValue={opportunity?.source ?? ""}
+            value={source}
+            onChange={(event) => setSource(event.target.value)}
             className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
           >
             <option value="">Not specified</option>
-            {OPPORTUNITY_SOURCES.map((source) => <option key={source}>{source}</option>)}
+            {OPPORTUNITY_SOURCES.map((sourceOption) => <option key={sourceOption}>{sourceOption}</option>)}
           </select>
         </div>
+        <div className="space-y-2">
+          <Label htmlFor="primary_contact_id">Primary contact</Label>
+          <select
+            id="primary_contact_id"
+            name="primary_contact_id"
+            key={companyId}
+            defaultValue={opportunity?.company_id === companyId ? opportunity.primary_contact_id ?? "" : ""}
+            className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+          >
+            <option value="">Not specified</option>
+            {primaryContacts.map((contact) => <option key={contact.id} value={contact.id}>{contact.name}</option>)}
+          </select>
+        </div>
+        {source === "Recruiter" ? (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="recruiting_firm_id">Recruiting firm</Label>
+              <select
+                id="recruiting_firm_id"
+                name="recruiting_firm_id"
+                value={recruitingFirmId}
+                onChange={(event) => setRecruitingFirmId(event.target.value)}
+                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+              >
+                <option value="">Not specified</option>
+                {firms.map((firm) => <option key={firm.id} value={firm.id}>{firm.name}</option>)}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="recruiter_contact_id">Primary recruiter</Label>
+              <select
+                id="recruiter_contact_id"
+                name="recruiter_contact_id"
+                key={recruitingFirmId}
+                defaultValue={opportunity?.recruiting_firm_id === recruitingFirmId ? opportunity.recruiter_contact_id ?? "" : ""}
+                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+              >
+                <option value="">Not specified</option>
+                {recruiters.map((contact) => <option key={contact.id} value={contact.id}>{contact.name}</option>)}
+              </select>
+            </div>
+          </>
+        ) : null}
         <div className="space-y-2">
           <Label htmlFor="stage">Stage</Label>
           <select
@@ -132,16 +164,6 @@ export function OpportunityForm({
           <Label htmlFor="next_action">Next action</Label>
           <Input id="next_action" name="next_action" placeholder="Follow up with recruiter" defaultValue={opportunity?.next_action ?? ""} />
         </div>
-        <div className="flex flex-wrap gap-6 sm:col-span-2">
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" name="promoted_by_hirer" defaultChecked={opportunity?.promoted_by_hirer ?? false} className="size-4 accent-primary" />
-            Promoted by hiring team
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" name="easy_apply" defaultChecked={opportunity?.easy_apply ?? false} className="size-4 accent-primary" />
-            Easy Apply
-          </label>
-        </div>
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="notes">Notes</Label>
           <textarea id="notes" name="notes" rows={3} defaultValue={opportunity?.notes ?? ""} className="w-full resize-y rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/30" />
@@ -150,7 +172,7 @@ export function OpportunityForm({
 
       {state.error ? <p role="alert" className="text-sm text-destructive">{state.error}</p> : null}
 
-      <div className="flex items-center justify-end gap-3 border-t pt-6">
+      <div className="flex items-center justify-end gap-3 border-t pt-5">
         <Link href="/opportunities" className={cn(buttonVariants({ variant: "ghost" }))}>Cancel</Link>
         <Button type="submit" disabled={pending}>
           {pending ? <LoaderCircle className="size-4 animate-spin" /> : null}

@@ -23,8 +23,8 @@ export function CompanyForm({ company }: { company?: Company }) {
   const [state, formAction, pending] = useActionState(action, initialState);
 
   return (
-    <form action={formAction} className="space-y-8">
-      <div className="grid gap-5 sm:grid-cols-2">
+    <form action={formAction} className="space-y-5">
+      <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="name">Company name</Label>
           <Input id="name" name="name" defaultValue={company?.name} autoFocus required />
@@ -116,7 +116,7 @@ export function CompanyForm({ company }: { company?: Company }) {
           <textarea
             id="notes"
             name="notes"
-            rows={6}
+            rows={3}
             defaultValue={company?.notes ?? ""}
             className="w-full resize-y rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/30"
           />
@@ -125,7 +125,7 @@ export function CompanyForm({ company }: { company?: Company }) {
 
       {state.error ? <p role="alert" className="text-sm text-destructive">{state.error}</p> : null}
 
-      <div className="flex items-center justify-end gap-3 border-t pt-6">
+      <div className="flex items-center justify-end gap-3 border-t pt-5">
         <Link href="/companies" className={cn(buttonVariants({ variant: "ghost" }))}>Cancel</Link>
         <Button type="submit" disabled={pending}>
           {pending ? <LoaderCircle className="size-4 animate-spin" /> : null}
