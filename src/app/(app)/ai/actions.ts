@@ -57,6 +57,47 @@ export async function parseOpportunityJobDescription(
   _: JobParserState,
   formData: FormData,
 ): Promise<JobParserState> {
+  const intent = formData.get("intent");
+  if (intent === "test-storage") {
+    const opportunityId = formData.get("opportunity_id");
+    if (typeof opportunityId !== "string" || !opportunityId) {
+      return { status: "error", message: "Select an opportunity before testing storage." };
+    }
+
+    const { supabase, userId } = await authenticatedUser();
+    const { data: opportunity } = await supabase
+      .from("opportunities")
+      .select("id")
+      .eq("id", opportunityId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (!opportunity) return { status: "error", message: "Select an opportunity you own." };
+
+    const { data: diagnostic, error: diagnosticError } = await supabase
+      .from("ai_analyses")
+      .insert({
+        user_id: userId,
+        opportunity_id: opportunity.id,
+        analysis_type: "job_description",
+        input_hash: "storage-diagnostic",
+        model: "storage-diagnostic",
+        result: { diagnostic: true },
+      })
+      .select("id")
+      .single();
+
+    if (diagnosticError) {
+      return {
+        status: "error",
+        message: `Database error ${diagnosticError.code}: ${diagnosticError.message}`,
+      };
+    }
+
+    await supabase.from("ai_analyses").delete().eq("id", diagnostic.id).eq("user_id", userId);
+    return { status: "success", message: "Analysis storage is working. The diagnostic row was removed." };
+  }
+
   const parsed = jobDescriptionInputSchema.safeParse({
     opportunityId: formData.get("opportunity_id"),
     jobDescription: formData.get("job_description"),

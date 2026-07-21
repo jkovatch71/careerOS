@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { BrainCircuit, CheckCircle2, LoaderCircle, TriangleAlert } from "lucide-react";
+import { BrainCircuit, CheckCircle2, Database, LoaderCircle, TriangleAlert } from "lucide-react";
 
 import {
   parseOpportunityJobDescription,
@@ -35,13 +35,20 @@ export function JobDescriptionParser({ opportunities }: { opportunities: Opportu
           <textarea id="job_description" name="job_description" rows={12} required minLength={200} maxLength={30000} placeholder="Paste the complete job description here…" className="w-full resize-y rounded-md border border-input bg-transparent px-3 py-2 text-sm leading-6 outline-none focus-visible:ring-2 focus-visible:ring-ring/30" />
           <p className="text-xs text-muted-foreground">Minimum 200 characters. Analysis runs only when you click the button.</p>
         </div>
-        <Button type="submit" disabled={pending || opportunities.length === 0}>
-          {pending ? <LoaderCircle className="size-4 animate-spin" /> : <BrainCircuit className="size-4" />}
-          {pending ? "Analyzing…" : "Analyze and save"}
-        </Button>
+        <div className="flex flex-wrap gap-3">
+          <Button type="submit" name="intent" value="analyze" disabled={pending || opportunities.length === 0}>
+            {pending ? <LoaderCircle className="size-4 animate-spin" /> : <BrainCircuit className="size-4" />}
+            {pending ? "Working…" : "Analyze and save"}
+          </Button>
+          <Button type="submit" name="intent" value="test-storage" formNoValidate variant="outline" disabled={pending || opportunities.length === 0}>
+            <Database className="size-4" /> Test database save (no AI)
+          </Button>
+        </div>
       </form>
 
       {state.status === "error" ? <div role="alert" className="mt-5 flex gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive"><TriangleAlert className="mt-0.5 size-4 shrink-0" />{state.message}</div> : null}
+
+      {state.status === "success" && !state.analysis ? <div role="status" className="mt-5 flex gap-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm text-emerald-300"><CheckCircle2 className="mt-0.5 size-4 shrink-0" />{state.message}</div> : null}
 
       {state.status === "success" && state.analysis ? (
         <div className="mt-6 rounded-xl border bg-muted/10 p-5">
