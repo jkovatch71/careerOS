@@ -22,6 +22,7 @@ export function ResumeUploadForm() {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string>();
+  const [fileName, setFileName] = useState<string>();
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -93,9 +94,29 @@ export function ResumeUploadForm() {
           <Input id="focus" name="focus" placeholder="Director / Head of QA" />
         </div>
         <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="file">File</Label>
-          <Input id="file" name="file" type="file" accept=".pdf,.doc,.docx" required />
-          <p className="text-xs text-muted-foreground">PDF, DOC, or DOCX · Maximum 10 MB</p>
+          <Label>Resume file</Label>
+          <input
+            id="file"
+            name="file"
+            type="file"
+            accept=".pdf,.doc,.docx"
+            onChange={(event) => setFileName(event.target.files?.[0]?.name)}
+            className="peer sr-only"
+          />
+          <label
+            htmlFor="file"
+            className="flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed bg-muted/10 px-4 py-5 text-center transition-colors hover:border-primary/50 hover:bg-muted/20 peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring"
+          >
+            <span className="flex size-9 items-center justify-center rounded-lg border bg-background">
+              <Upload className="size-4 text-primary" />
+            </span>
+            <span className="mt-3 text-sm font-medium">
+              {fileName ?? "Choose a resume file"}
+            </span>
+            <span className="mt-1 text-xs text-muted-foreground">
+              {fileName ? "Choose another file" : "PDF, DOC, or DOCX · Maximum 10 MB"}
+            </span>
+          </label>
         </div>
         <label className="flex items-center gap-2 text-sm sm:col-span-2">
           <input type="checkbox" name="is_master" className="size-4 accent-primary" />
@@ -110,7 +131,7 @@ export function ResumeUploadForm() {
       <div className="flex justify-end gap-3 border-t pt-5">
         <Link href="/resumes" className={cn(buttonVariants({ variant: "ghost" }))}>Cancel</Link>
         <Button type="submit" disabled={pending}>
-          {pending ? <LoaderCircle className="size-4 animate-spin" /> : <Upload className="size-4" />}
+          {pending ? <LoaderCircle className="size-4 animate-spin" /> : null}
           Upload resume
         </Button>
       </div>
