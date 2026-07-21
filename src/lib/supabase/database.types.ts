@@ -220,6 +220,39 @@ export type Database = {
           },
         ];
       };
+      resumes: {
+        Row: {
+          id: string;
+          name: string;
+          focus: string | null;
+          file_url: string | null;
+          is_master: boolean | null;
+          notes: string | null;
+          created_at: string | null;
+          user_id: string | null;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          focus?: string | null;
+          file_url?: string | null;
+          is_master?: boolean | null;
+          notes?: string | null;
+          created_at?: string | null;
+          user_id?: string | null;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          focus?: string | null;
+          file_url?: string | null;
+          is_master?: boolean | null;
+          notes?: string | null;
+          created_at?: string | null;
+          user_id?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -231,3 +264,4 @@ export type Database = {
 export type Company = Database["public"]["Tables"]["companies"]["Row"];
 export type Opportunity = Database["public"]["Tables"]["opportunities"]["Row"];
 export type Contact = Database["public"]["Tables"]["contacts"]["Row"];
+export type Resume = Database["public"]["Tables"]["resumes"]["Row"];
