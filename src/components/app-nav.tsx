@@ -22,7 +22,7 @@ const navigation = [
   { name: "Pipeline", href: "/pipeline", icon: LayoutPanelTop, available: true },
   { name: "Contacts", href: "/contacts", icon: Users, available: true },
   { name: "Resumes", href: "/resumes", icon: FileText, available: true },
-  { name: "Outreach", href: "/outreach", icon: Send, available: false },
+  { name: "Outreach", href: "/outreach", icon: Send, available: true },
   { name: "Analytics", href: "/analytics", icon: BarChart3, available: false },
 ] as const;
 
