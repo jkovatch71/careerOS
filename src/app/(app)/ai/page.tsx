@@ -4,6 +4,7 @@ import { BrainCircuit, ShieldCheck, WalletCards } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConnectionCheck } from "@/features/ai/connection-check";
 import { JobDescriptionParser } from "@/features/ai/job-description-parser";
+import { ResumeMatcher } from "@/features/ai/resume-matcher";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "AI Setup" };
@@ -19,6 +20,9 @@ export default async function AiPage() {
     label: `${opportunity.role_title}${opportunity.employer?.name ? ` — ${opportunity.employer.name}` : ""}`,
     jobDescription: opportunity.job_description,
   }));
+  const { data: resumes } = await supabase.from("resumes").select("id, name, focus, file_url").order("is_master", { ascending: false }).order("created_at", { ascending: false });
+  const analyzedOpportunityOptions = opportunityOptions.filter((opportunity) => opportunity.jobDescription).map(({ id, label }) => ({ id, label }));
+  const resumeOptions = (resumes ?? []).filter((resume) => resume.file_url).map((resume) => ({ id: resume.id, label: `${resume.name}${resume.focus ? ` — ${resume.focus}` : ""}` }));
   return (
     <div className="mx-auto max-w-4xl">
       <div>
@@ -57,6 +61,16 @@ export default async function AiPage() {
         </CardHeader>
         <CardContent>
           {opportunityOptions.length ? <JobDescriptionParser opportunities={opportunityOptions} /> : <p className="text-sm text-muted-foreground">Add an opportunity before analyzing a job description.</p>}
+        </CardContent>
+      </Card>
+
+      <Card className="mt-4">
+        <CardHeader>
+          <CardTitle className="text-base">Resume match</CardTitle>
+          <CardDescription>Compare a private resume against a saved job description using evidence from both documents.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ResumeMatcher opportunities={analyzedOpportunityOptions} resumes={resumeOptions} />
         </CardContent>
       </Card>
     </div>
