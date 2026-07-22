@@ -3,6 +3,7 @@ import { BrainCircuit, ShieldCheck, WalletCards } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConnectionCheck } from "@/features/ai/connection-check";
+import { CompanyResearchForm } from "@/features/ai/company-research-form";
 import { JobDescriptionParser } from "@/features/ai/job-description-parser";
 import { ResumeMatcher } from "@/features/ai/resume-matcher";
 import { createClient } from "@/lib/supabase/server";
@@ -29,7 +30,7 @@ export default async function AiPage() {
         <p className="text-sm text-muted-foreground">Sprint 4</p>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight md:text-3xl">AI workspace</h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-          Verify the private Workers AI connection before enabling job parsing and resume matching.
+          Parse roles, compare private resumes, and turn supplied company material into grounded executive briefs.
         </p>
       </div>
 
@@ -61,6 +62,16 @@ export default async function AiPage() {
         </CardHeader>
         <CardContent>
           {opportunityOptions.length ? <JobDescriptionParser opportunities={opportunityOptions} /> : <p className="text-sm text-muted-foreground">Add an opportunity before analyzing a job description.</p>}
+        </CardContent>
+      </Card>
+
+      <Card className="mt-4">
+        <CardHeader>
+          <CardTitle className="text-base">Company research</CardTitle>
+          <CardDescription>Create a source-grounded company and interview brief without implying live web access.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <CompanyResearchForm opportunities={opportunityOptions.map(({ id, label }) => ({ id, label }))} />
         </CardContent>
       </Card>
 

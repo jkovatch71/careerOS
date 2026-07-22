@@ -4,6 +4,11 @@ import { createHash } from "node:crypto";
 import { redirect } from "next/navigation";
 
 import {
+  companyResearchInputSchema,
+  createCompanyResearch,
+  type CompanyResearch,
+} from "@/features/ai/company-research";
+import {
   jobDescriptionInputSchema,
   parseJobDescription,
   type JobAnalysis,
@@ -34,6 +39,12 @@ export type ResumeMatchState = {
   status?: "success" | "error";
   message?: string;
   match?: ResumeMatch;
+};
+
+export type CompanyResearchState = {
+  status?: "success" | "error";
+  message?: string;
+  research?: CompanyResearch;
 };
 
 async function authenticatedUser() {
@@ -161,5 +172,59 @@ export async function analyzeResumeMatch(
     return { status: "success", message: "Resume match saved.", match };
   } catch (matchError) {
     return { status: "error", message: matchError instanceof Error ? matchError.message : "Career OS could not match this resume." };
+  }
+}
+
+export async function analyzeCompanyResearch(
+  _: CompanyResearchState,
+  formData: FormData,
+): Promise<CompanyResearchState> {
+  const parsed = companyResearchInputSchema.safeParse({
+    opportunityId: formData.get("opportunity_id"),
+    sourceMaterial: formData.get("source_material"),
+  });
+  if (!parsed.success) return { status: "error", message: parsed.error.issues[0]?.message ?? "Review the research material." };
+
+  const { supabase, userId } = await authenticatedUser();
+  const { data: opportunity } = await supabase
+    .from("opportunities")
+    .select("id, role_title, company_id")
+    .eq("id", parsed.data.opportunityId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (!opportunity?.company_id) return { status: "error", message: "Select an opportunity with an employer." };
+
+  const { data: company } = await supabase
+    .from("companies")
+    .select("name, website, industry, employee_range, remote_policy, notes")
+    .eq("id", opportunity.company_id)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (!company) return { status: "error", message: "Career OS could not load the employer record." };
+
+  const companyContext = [
+    `Name: ${company.name}`,
+    `Website: ${company.website ?? "Not recorded"}`,
+    `Industry: ${company.industry ?? "Not recorded"}`,
+    `Employee range: ${company.employee_range ?? "Not recorded"}`,
+    `Remote policy: ${company.remote_policy ?? "Not recorded"}`,
+    `Notes: ${company.notes ?? "None"}`,
+  ].join("\n");
+
+  try {
+    const research = await createCompanyResearch({ companyContext, roleTitle: opportunity.role_title, sourceMaterial: parsed.data.sourceMaterial });
+    const inputHash = createHash("sha256").update(`${companyContext}\n${opportunity.role_title}\n${parsed.data.sourceMaterial}`).digest("hex");
+    const { error: saveError } = await supabase.from("ai_analyses").insert({
+      user_id: userId,
+      opportunity_id: opportunity.id,
+      analysis_type: "company_research",
+      input_hash: inputHash,
+      model: CLOUDFLARE_AI_MODEL,
+      result: research,
+    });
+    if (saveError) throw new Error("Career OS could not save the company research.");
+    return { status: "success", message: "Company research saved.", research };
+  } catch (researchError) {
+    return { status: "error", message: researchError instanceof Error ? researchError.message : "Career OS could not create the company research." };
   }
 }
