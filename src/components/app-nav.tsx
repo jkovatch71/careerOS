@@ -27,7 +27,7 @@ const navigation = [
   { name: "Outreach", href: "/outreach", icon: Send, available: true },
   { name: "Follow-ups", href: "/follow-ups", icon: ListTodo, available: true },
   { name: "AI Workspace", href: "/ai", icon: BrainCircuit, available: true },
-  { name: "Analytics", href: "/analytics", icon: BarChart3, available: false },
+  { name: "Analytics", href: "/analytics", icon: BarChart3, available: true },
 ] as const;
 
 export function AppNav() {
