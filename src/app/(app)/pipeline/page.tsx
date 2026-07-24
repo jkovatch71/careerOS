@@ -99,7 +99,7 @@ export default async function PipelinePage({
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
                               <Link
-                                href={`/opportunities/${opportunity.id}/edit`}
+                                href={`/opportunities/${opportunity.id}`}
                                 className="block truncate text-sm font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                               >
                                 {opportunity.role_title}

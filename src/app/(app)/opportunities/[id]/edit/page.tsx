@@ -24,12 +24,12 @@ export default async function EditOpportunityPage({ params }: { params: Promise<
   return (
     <div className="mx-auto max-w-3xl">
       <div className="flex items-center justify-between gap-4">
-        <Link href="/opportunities" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ChevronLeft className="size-4" /> Opportunities</Link>
+        <Link href={`/opportunities/${opportunity.id}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ChevronLeft className="size-4" /> Opportunity intelligence</Link>
         <DeleteOpportunityButton opportunityId={opportunity.id} roleTitle={opportunity.role_title} />
       </div>
       <Card className="mt-5">
         <CardHeader><CardTitle>{opportunity.role_title}</CardTitle><CardDescription>Update the stage, fit, and next action.</CardDescription></CardHeader>
-        <CardContent><OpportunityForm companies={companies ?? []} contacts={contacts ?? []} opportunity={opportunity} /></CardContent>
+        <CardContent><OpportunityForm companies={companies ?? []} contacts={contacts ?? []} opportunity={opportunity} cancelHref={`/opportunities/${opportunity.id}`} /></CardContent>
       </Card>
     </div>
   );

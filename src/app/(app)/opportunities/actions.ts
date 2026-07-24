@@ -168,7 +168,8 @@ export async function updateOpportunity(
   if (error) return { error: "Career OS could not update this opportunity." };
 
   revalidatePath("/opportunities");
-  redirect("/opportunities");
+  revalidatePath(`/opportunities/${opportunityId}`);
+  redirect(`/opportunities/${opportunityId}`);
 }
 
 export async function deleteOpportunity(opportunityId: string) {

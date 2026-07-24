@@ -23,10 +23,12 @@ export function OpportunityForm({
   companies,
   contacts,
   opportunity,
+  cancelHref = "/opportunities",
 }: {
   companies: Pick<Company, "id" | "name" | "organization_type">[];
   contacts: Pick<Contact, "id" | "name" | "company_id" | "contact_type">[];
   opportunity?: Opportunity;
+  cancelHref?: string;
 }) {
   const action = opportunity
     ? updateOpportunity.bind(null, opportunity.id)
@@ -174,7 +176,7 @@ export function OpportunityForm({
       {state.error ? <p role="alert" className="text-sm text-destructive">{state.error}</p> : null}
 
       <div className="flex items-center justify-end gap-3 border-t pt-5">
-        <Link href="/opportunities" className={cn(buttonVariants({ variant: "ghost" }))}>Cancel</Link>
+        <Link href={cancelHref} className={cn(buttonVariants({ variant: "ghost" }))}>Cancel</Link>
         <Button type="submit" disabled={pending}>
           {pending ? <LoaderCircle className="size-4 animate-spin" /> : null}
           {opportunity ? "Save changes" : "Create opportunity"}
