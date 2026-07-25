@@ -1,18 +1,23 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import { ArrowRight, LoaderCircle } from "lucide-react";
+import { ArrowRight, KeyRound, LoaderCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { createClient } from "@/lib/supabase/client";
 import { signIn, signUp, type AuthState } from "./actions";
 
 const initialState: AuthState = {};
 const rememberedEmailKey = "career-os:remembered-email";
 
 export function AuthForm() {
+  const router = useRouter();
   const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
+  const [passkeyError, setPasskeyError] = useState<string>();
+  const [passkeyPending, setPasskeyPending] = useState(false);
   const emailRef = useRef<HTMLInputElement>(null);
   const rememberEmailRef = useRef<HTMLInputElement>(null);
   const action = mode === "sign-in" ? signIn : signUp;
@@ -35,6 +40,32 @@ export function AuthForm() {
     }
 
     window.localStorage.removeItem(rememberedEmailKey);
+  }
+
+  async function handlePasskeySignIn() {
+    if (!window.PublicKeyCredential) {
+      setPasskeyError("This browser or device does not support passkeys.");
+      return;
+    }
+
+    setPasskeyError(undefined);
+    setPasskeyPending(true);
+
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithPasskey();
+
+    if (error) {
+      setPasskeyError(
+        error.name === "NotAllowedError"
+          ? "Passkey sign-in was cancelled or timed out."
+          : "Career OS could not sign in with that passkey.",
+      );
+      setPasskeyPending(false);
+      return;
+    }
+
+    router.replace("/dashboard");
+    router.refresh();
   }
 
   return (
@@ -79,6 +110,32 @@ export function AuthForm() {
         {mode === "sign-in" ? "Sign in" : "Create account"}
         {!pending ? <ArrowRight className="size-4" /> : null}
       </Button>
+      {mode === "sign-in" ? (
+        <>
+          <div className="flex items-center gap-3" aria-hidden="true">
+            <span className="h-px flex-1 bg-border" />
+            <span className="text-xs uppercase tracking-wider text-muted-foreground">or</span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={pending || passkeyPending}
+            onClick={handlePasskeySignIn}
+          >
+            {passkeyPending ? (
+              <LoaderCircle className="size-4 animate-spin" />
+            ) : (
+              <KeyRound className="size-4" />
+            )}
+            Sign in with a passkey
+          </Button>
+          {passkeyError ? (
+            <p role="alert" className="text-sm text-destructive">{passkeyError}</p>
+          ) : null}
+        </>
+      ) : null}
       <p className="text-center text-sm text-muted-foreground">
         {mode === "sign-in" ? "New to Career OS?" : "Already have an account?"}{" "}
         <button
