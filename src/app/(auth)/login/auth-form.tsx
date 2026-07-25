@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { ArrowRight, LoaderCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -9,17 +9,48 @@ import { Label } from "@/components/ui/label";
 import { signIn, signUp, type AuthState } from "./actions";
 
 const initialState: AuthState = {};
+const rememberedEmailKey = "career-os:remembered-email";
 
 export function AuthForm() {
   const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
+  const emailRef = useRef<HTMLInputElement>(null);
+  const rememberEmailRef = useRef<HTMLInputElement>(null);
   const action = mode === "sign-in" ? signIn : signUp;
   const [state, formAction, pending] = useActionState(action, initialState);
 
+  useEffect(() => {
+    const rememberedEmail = window.localStorage.getItem(rememberedEmailKey);
+
+    if (!rememberedEmail) return;
+    if (emailRef.current) emailRef.current.value = rememberedEmail;
+    if (rememberEmailRef.current) rememberEmailRef.current.checked = true;
+  }, []);
+
+  function handleSubmit() {
+    const email = emailRef.current?.value.trim() ?? "";
+
+    if (rememberEmailRef.current?.checked && email) {
+      window.localStorage.setItem(rememberedEmailKey, email);
+      return;
+    }
+
+    window.localStorage.removeItem(rememberedEmailKey);
+  }
+
   return (
-    <form action={formAction} className="space-y-5">
+    <form action={formAction} className="space-y-5" onSubmit={handleSubmit}>
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
-        <Input id="email" name="email" type="email" autoComplete="email" required />
+        <Input
+          ref={emailRef}
+          id="email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          autoCapitalize="none"
+          spellCheck={false}
+          required
+        />
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">Password</Label>
@@ -32,6 +63,14 @@ export function AuthForm() {
           required
         />
       </div>
+      <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+        <input
+          ref={rememberEmailRef}
+          type="checkbox"
+          className="size-4 accent-primary"
+        />
+        Remember my email on this device
+      </label>
       {state.error ? (
         <p role="alert" className="text-sm text-destructive">{state.error}</p>
       ) : null}
