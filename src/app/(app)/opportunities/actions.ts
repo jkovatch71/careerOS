@@ -1,6 +1,6 @@
 "use server";
 
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -29,6 +29,21 @@ export type OpportunityIntakeState = {
     analysis: JobAnalysis;
   };
 };
+
+function opportunityInsertError(code?: string) {
+  switch (code) {
+    case "42501":
+      return "Career OS could not create this opportunity because its ownership policy rejected the save.";
+    case "23503":
+      return "Career OS could not create this opportunity because a selected company or contact is no longer available.";
+    case "23514":
+      return "Career OS could not create this opportunity because one of the extracted values is not allowed.";
+    case "23502":
+      return "Career OS could not create this opportunity because a required database value is missing.";
+    default:
+      return `Career OS could not create this opportunity${code ? ` (database code ${code})` : ""}.`;
+  }
+}
 
 function valuesFromForm(formData: FormData) {
   return {
@@ -177,19 +192,19 @@ export async function createOpportunity(
     if (existingCompany) {
       companyId = existingCompany.id;
     } else {
-      const { data: newCompany, error: companyError } = await supabase
+      const newCompanyId = randomUUID();
+      const { error: companyError } = await supabase
         .from("companies")
         .insert({
+          id: newCompanyId,
           name: companyName.data,
           organization_type: "employer",
           user_id: userId,
-        })
-        .select("id")
-        .single();
-      if (companyError || !newCompany) {
+        });
+      if (companyError) {
         return { error: "Career OS could not create the suggested company." };
       }
-      companyId = newCompany.id;
+      companyId = newCompanyId;
     }
   }
 
@@ -241,12 +256,22 @@ export async function createOpportunity(
     }
   }
 
-  const { data: opportunity, error } = await supabase.from("opportunities").insert({
+  const opportunityId = randomUUID();
+  const { error } = await supabase.from("opportunities").insert({
     ...parsed.data,
+    id: opportunityId,
     company_id: companyId,
     user_id: userId,
-  }).select("id").single();
-  if (error || !opportunity) return { error: "Career OS could not create this opportunity." };
+  });
+  if (error) {
+    console.error("Opportunity insert failed", {
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+      message: error.message,
+    });
+    return { error: opportunityInsertError(error.code) };
+  }
 
   const analysisJson = formData.get("analysis_json");
   if (typeof analysisJson === "string" && analysisJson) {
@@ -255,7 +280,7 @@ export async function createOpportunity(
       if (parsed.data.job_description) {
         await supabase.from("ai_analyses").insert({
           user_id: userId,
-          opportunity_id: opportunity.id,
+          opportunity_id: opportunityId,
           analysis_type: "job_description",
           input_hash: createHash("sha256").update(parsed.data.job_description).digest("hex"),
           model: CLOUDFLARE_AI_MODEL,
@@ -269,7 +294,7 @@ export async function createOpportunity(
 
   revalidatePath("/opportunities");
   revalidatePath("/companies");
-  redirect(`/opportunities/${opportunity.id}`);
+  redirect(`/opportunities/${opportunityId}`);
 }
 
 export async function updateOpportunity(
