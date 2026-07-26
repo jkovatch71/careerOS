@@ -1,12 +1,34 @@
 "use server";
 
+import { createHash } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 
+import { jobAnalysisSchema, type JobAnalysis } from "@/features/ai/job-description";
+import { createOpportunityIntakeDraft } from "@/features/opportunities/opportunity-intake";
 import { opportunitySchema } from "@/features/opportunities/schemas";
+import { CLOUDFLARE_AI_MODEL } from "@/lib/ai/cloudflare";
+import { fetchJobPostingText } from "@/lib/job-postings/fetch-posting";
 import { createClient } from "@/lib/supabase/server";
 
 export type OpportunityActionState = { error?: string };
+export type OpportunityIntakeState = {
+  status?: "error" | "success";
+  message?: string;
+  draft?: {
+    companyId: string | null;
+    companyName: string | null;
+    roleTitle: string;
+    jobUrl: string | null;
+    jobDescription: string;
+    source: string | null;
+    promotedByHirer: boolean;
+    easyApply: boolean;
+    compensation: string | null;
+    analysis: JobAnalysis;
+  };
+};
 
 function valuesFromForm(formData: FormData) {
   return {
@@ -16,6 +38,7 @@ function valuesFromForm(formData: FormData) {
     recruiter_contact_id: formData.get("recruiter_contact_id") ?? "",
     role_title: formData.get("role_title"),
     job_url: formData.get("job_url"),
+    job_description: formData.get("job_description"),
     source: formData.get("source"),
     promoted_by_hirer: formData.get("promoted_by_hirer") === "on",
     easy_apply: formData.get("easy_apply") === "on",
@@ -37,6 +60,95 @@ async function authenticatedUser() {
   return { supabase, userId };
 }
 
+const intakeInputSchema = z
+  .object({
+    inputMode: z.enum(["url", "paste"]),
+    jobUrl: z
+      .union([z.literal(""), z.url("Enter a complete job-posting URL.")])
+      .transform((value) => value || null),
+    jobDescription: z.string().trim().max(30_000),
+  })
+  .superRefine((value, context) => {
+    if (value.inputMode === "url" && !value.jobUrl) {
+      context.addIssue({ code: "custom", path: ["jobUrl"], message: "Enter a job-posting URL." });
+    }
+    if (value.inputMode === "paste" && value.jobDescription.length < 200) {
+      context.addIssue({
+        code: "custom",
+        path: ["jobDescription"],
+        message: "Paste at least 200 characters of the job posting.",
+      });
+    }
+  });
+
+export async function analyzeOpportunityIntake(
+  _: OpportunityIntakeState,
+  formData: FormData,
+): Promise<OpportunityIntakeState> {
+  const parsed = intakeInputSchema.safeParse({
+    inputMode: formData.get("input_mode"),
+    jobUrl: formData.get("job_url"),
+    jobDescription: formData.get("job_description"),
+  });
+  if (!parsed.success) {
+    return {
+      status: "error",
+      message: parsed.error.issues[0]?.message ?? "Review the job-posting details.",
+    };
+  }
+
+  const { supabase, userId } = await authenticatedUser();
+
+  try {
+    const jobDescription =
+      parsed.data.inputMode === "url" && parsed.data.jobUrl
+        ? await fetchJobPostingText(parsed.data.jobUrl)
+        : parsed.data.jobDescription;
+    const { draft, analysis } = await createOpportunityIntakeDraft(
+      jobDescription,
+      parsed.data.jobUrl ?? undefined,
+    );
+    const { data: companies } = await supabase
+      .from("companies")
+      .select("id, name, organization_type")
+      .eq("user_id", userId);
+    const normalizedCompanyName = draft.companyName?.trim().toLocaleLowerCase();
+    const matchingCompany = (companies ?? []).find(
+      (company) =>
+        ["employer", "both"].includes(company.organization_type) &&
+        company.name.trim().toLocaleLowerCase() === normalizedCompanyName,
+    );
+
+    return {
+      status: "success",
+      message: "Review the extracted details before creating the opportunity.",
+      draft: {
+        companyId: matchingCompany?.id ?? null,
+        companyName: draft.companyName,
+        roleTitle: draft.roleTitle,
+        jobUrl: parsed.data.jobUrl,
+        jobDescription,
+        source: draft.source,
+        promotedByHirer: draft.promotedByHirer,
+        easyApply: draft.easyApply,
+        compensation: draft.compensation,
+        analysis,
+      },
+    };
+  } catch (error) {
+    const fallbackMessage =
+      parsed.data.inputMode === "url"
+        ? "Career OS could not read that posting. Switch to Paste posting and copy the full description."
+        : "Career OS could not analyze that posting. Please review the text and try again.";
+    return {
+      status: "error",
+      message: error instanceof Error && !error.message.includes("fetch")
+        ? `${error.message} ${parsed.data.inputMode === "url" ? "You can paste the posting instead." : ""}`.trim()
+        : fallbackMessage,
+    };
+  }
+}
+
 export async function createOpportunity(
   _: OpportunityActionState,
   formData: FormData,
@@ -47,14 +159,50 @@ export async function createOpportunity(
   }
 
   const { supabase, userId } = await authenticatedUser();
-  const { data: company } = await supabase
-    .from("companies")
-    .select("id, organization_type")
-    .eq("id", parsed.data.company_id)
-    .eq("user_id", userId)
-    .maybeSingle();
-  if (!company || !["employer", "both"].includes(company.organization_type)) {
-    return { error: "Select an employer organization you own." };
+  let companyId = parsed.data.company_id;
+  if (!companyId && formData.get("create_company") === "on") {
+    const companyName = z.string().trim().min(1).max(180).safeParse(formData.get("new_company_name"));
+    if (!companyName.success) return { error: "Review the suggested company name." };
+
+    const { data: existingCompanies } = await supabase
+      .from("companies")
+      .select("id, name, organization_type")
+      .eq("user_id", userId);
+    const existingCompany = (existingCompanies ?? []).find(
+      (company) =>
+        ["employer", "both"].includes(company.organization_type) &&
+        company.name.trim().toLocaleLowerCase() === companyName.data.toLocaleLowerCase(),
+    );
+
+    if (existingCompany) {
+      companyId = existingCompany.id;
+    } else {
+      const { data: newCompany, error: companyError } = await supabase
+        .from("companies")
+        .insert({
+          name: companyName.data,
+          organization_type: "employer",
+          user_id: userId,
+        })
+        .select("id")
+        .single();
+      if (companyError || !newCompany) {
+        return { error: "Career OS could not create the suggested company." };
+      }
+      companyId = newCompany.id;
+    }
+  }
+
+  if (companyId) {
+    const { data: company } = await supabase
+      .from("companies")
+      .select("id, organization_type")
+      .eq("id", companyId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!company || !["employer", "both"].includes(company.organization_type)) {
+      return { error: "Select an employer organization you own." };
+    }
   }
 
   if (parsed.data.primary_contact_id) {
@@ -64,7 +212,7 @@ export async function createOpportunity(
       .eq("id", parsed.data.primary_contact_id)
       .eq("user_id", userId)
       .maybeSingle();
-    if (!primaryContact || primaryContact.company_id !== parsed.data.company_id) {
+    if (!companyId || !primaryContact || primaryContact.company_id !== companyId) {
       return { error: "Select a primary contact associated with this employer." };
     }
   }
@@ -93,14 +241,35 @@ export async function createOpportunity(
     }
   }
 
-  const { error } = await supabase.from("opportunities").insert({
+  const { data: opportunity, error } = await supabase.from("opportunities").insert({
     ...parsed.data,
+    company_id: companyId,
     user_id: userId,
-  });
-  if (error) return { error: "Career OS could not create this opportunity." };
+  }).select("id").single();
+  if (error || !opportunity) return { error: "Career OS could not create this opportunity." };
+
+  const analysisJson = formData.get("analysis_json");
+  if (typeof analysisJson === "string" && analysisJson) {
+    try {
+      const analysis = jobAnalysisSchema.parse(JSON.parse(analysisJson));
+      if (parsed.data.job_description) {
+        await supabase.from("ai_analyses").insert({
+          user_id: userId,
+          opportunity_id: opportunity.id,
+          analysis_type: "job_description",
+          input_hash: createHash("sha256").update(parsed.data.job_description).digest("hex"),
+          model: CLOUDFLARE_AI_MODEL,
+          result: analysis,
+        });
+      }
+    } catch {
+      // The opportunity is still valid when optional analysis metadata cannot be saved.
+    }
+  }
 
   revalidatePath("/opportunities");
-  redirect("/opportunities");
+  revalidatePath("/companies");
+  redirect(`/opportunities/${opportunity.id}`);
 }
 
 export async function updateOpportunity(
@@ -114,14 +283,16 @@ export async function updateOpportunity(
   }
 
   const { supabase, userId } = await authenticatedUser();
-  const { data: company } = await supabase
-    .from("companies")
-    .select("id, organization_type")
-    .eq("id", parsed.data.company_id)
-    .eq("user_id", userId)
-    .maybeSingle();
-  if (!company || !["employer", "both"].includes(company.organization_type)) {
-    return { error: "Select an employer organization you own." };
+  if (parsed.data.company_id) {
+    const { data: company } = await supabase
+      .from("companies")
+      .select("id, organization_type")
+      .eq("id", parsed.data.company_id)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!company || !["employer", "both"].includes(company.organization_type)) {
+      return { error: "Select an employer organization you own." };
+    }
   }
 
   if (parsed.data.primary_contact_id) {
@@ -131,7 +302,7 @@ export async function updateOpportunity(
       .eq("id", parsed.data.primary_contact_id)
       .eq("user_id", userId)
       .maybeSingle();
-    if (!primaryContact || primaryContact.company_id !== parsed.data.company_id) {
+    if (!parsed.data.company_id || !primaryContact || primaryContact.company_id !== parsed.data.company_id) {
       return { error: "Select a primary contact associated with this employer." };
     }
   }

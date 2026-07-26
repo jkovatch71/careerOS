@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import type { Company, Contact, Opportunity } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
 import { OPPORTUNITY_SOURCES, OPPORTUNITY_STAGES } from "./constants";
+import type { JobAnalysis } from "@/features/ai/job-description";
 
 const initialState: OpportunityActionState = {};
 
@@ -23,19 +24,32 @@ export function OpportunityForm({
   companies,
   contacts,
   opportunity,
+  draft,
   cancelHref = "/opportunities",
 }: {
   companies: Pick<Company, "id" | "name" | "organization_type">[];
   contacts: Pick<Contact, "id" | "name" | "company_id" | "contact_type">[];
   opportunity?: Opportunity;
+  draft?: {
+    companyId: string | null;
+    companyName: string | null;
+    roleTitle: string;
+    jobUrl: string | null;
+    jobDescription: string;
+    source: string | null;
+    promotedByHirer: boolean;
+    easyApply: boolean;
+    compensation: string | null;
+    analysis: JobAnalysis;
+  };
   cancelHref?: string;
 }) {
   const action = opportunity
     ? updateOpportunity.bind(null, opportunity.id)
     : createOpportunity;
   const [state, formAction, pending] = useActionState(action, initialState);
-  const [companyId, setCompanyId] = useState(opportunity?.company_id ?? "");
-  const [source, setSource] = useState(opportunity?.source ?? "");
+  const [companyId, setCompanyId] = useState(opportunity?.company_id ?? draft?.companyId ?? "");
+  const [source, setSource] = useState(opportunity?.source ?? draft?.source ?? "");
   const [recruitingFirmId, setRecruitingFirmId] = useState(opportunity?.recruiting_firm_id ?? "");
   const employers = companies.filter((company) => ["employer", "both"].includes(company.organization_type));
   const firms = companies.filter((company) => ["recruiting_firm", "both"].includes(company.organization_type));
@@ -47,38 +61,63 @@ export function OpportunityForm({
 
   return (
     <form action={formAction} className="relative space-y-5">
+      {draft ? <input type="hidden" name="analysis_json" value={JSON.stringify(draft.analysis)} /> : null}
       <div className="flex flex-wrap gap-5 sm:absolute sm:-top-14 sm:right-0">
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
-          <input type="checkbox" name="promoted_by_hirer" defaultChecked={opportunity?.promoted_by_hirer ?? false} className="size-4 accent-primary" />
+          <input type="checkbox" name="promoted_by_hirer" defaultChecked={opportunity?.promoted_by_hirer ?? draft?.promotedByHirer ?? false} className="size-4 accent-primary" />
           Promoted
         </label>
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
-          <input type="checkbox" name="easy_apply" defaultChecked={opportunity?.easy_apply ?? false} className="size-4 accent-primary" />
+          <input type="checkbox" name="easy_apply" defaultChecked={opportunity?.easy_apply ?? draft?.easyApply ?? false} className="size-4 accent-primary" />
           Easy Apply
         </label>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="company_id">Company</Label>
+          <Label htmlFor="company_id">Company <span className="font-normal text-muted-foreground">(optional)</span></Label>
           <select
             id="company_id"
             name="company_id"
             value={companyId}
             onChange={(event) => setCompanyId(event.target.value)}
-            required
             className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
           >
-            <option value="" disabled>Select a company</option>
+            <option value="">Unassigned</option>
             {employers.map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}
           </select>
         </div>
         <div className="space-y-2">
           <Label htmlFor="role_title">Role title</Label>
-          <Input id="role_title" name="role_title" defaultValue={opportunity?.role_title} required autoFocus />
+          <Input id="role_title" name="role_title" defaultValue={opportunity?.role_title ?? draft?.roleTitle} required autoFocus={!draft} />
         </div>
+        {!opportunity && draft?.companyName && !draft.companyId ? (
+          <div className="space-y-3 rounded-lg border bg-muted/15 p-4 sm:col-span-2">
+            <div>
+              <Label htmlFor="new_company_name">Suggested company</Label>
+              <p className="mt-1 text-xs text-muted-foreground">Confirm or correct the employer name before creating its CRM record.</p>
+            </div>
+            <Input id="new_company_name" name="new_company_name" defaultValue={draft.companyName} maxLength={180} />
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" name="create_company" defaultChecked className="size-4 accent-primary" />
+              Create this company when I save the opportunity
+            </label>
+          </div>
+        ) : null}
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="job_url">Job posting URL</Label>
-          <Input id="job_url" name="job_url" type="url" placeholder="https://..." defaultValue={opportunity?.job_url ?? ""} />
+          <Input id="job_url" name="job_url" type="url" placeholder="https://..." defaultValue={opportunity?.job_url ?? draft?.jobUrl ?? ""} />
+        </div>
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="job_description">Job description</Label>
+          <textarea
+            id="job_description"
+            name="job_description"
+            rows={draft ? 8 : 5}
+            maxLength={30000}
+            defaultValue={opportunity?.job_description ?? draft?.jobDescription ?? ""}
+            placeholder="Paste the full posting here…"
+            className="w-full resize-y rounded-md border border-input bg-transparent px-3 py-2 text-sm leading-6 outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="source">Source</Label>
@@ -149,7 +188,7 @@ export function OpportunityForm({
         </div>
         <div className="space-y-2">
           <Label htmlFor="compensation">Compensation</Label>
-          <Input id="compensation" name="compensation" placeholder="$150k–$180k" defaultValue={opportunity?.compensation ?? ""} />
+          <Input id="compensation" name="compensation" placeholder="$150k–$180k" defaultValue={opportunity?.compensation ?? draft?.compensation ?? ""} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="fit_score">Fit score</Label>

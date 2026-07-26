@@ -10,7 +10,9 @@ const nullableDate = z
   .transform((value) => (value === "" ? null : value.toISOString()));
 
 export const opportunitySchema = z.object({
-  company_id: z.uuid("Select a company."),
+  company_id: z
+    .union([z.literal(""), z.uuid()])
+    .transform((value) => value || null),
   primary_contact_id: z
     .union([z.literal(""), z.uuid()])
     .transform((value) => value || null),
@@ -24,6 +26,7 @@ export const opportunitySchema = z.object({
   job_url: z
     .union([z.literal(""), z.url("Enter a complete URL beginning with https://")])
     .transform((value) => value || null),
+  job_description: nullableText(30_000),
   source: z
     .union([z.literal(""), z.enum(OPPORTUNITY_SOURCES)])
     .transform((value) => value || null),
