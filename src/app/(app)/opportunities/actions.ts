@@ -30,8 +30,8 @@ export type OpportunityIntakeState = {
   };
 };
 
-function opportunityInsertError(code?: string) {
-  switch (code) {
+function opportunityInsertError(error: { code?: string; message?: string }) {
+  switch (error.code) {
     case "42501":
       return "Career OS could not create this opportunity because its ownership policy rejected the save.";
     case "23503":
@@ -40,8 +40,12 @@ function opportunityInsertError(code?: string) {
       return "Career OS could not create this opportunity because one of the extracted values is not allowed.";
     case "23502":
       return "Career OS could not create this opportunity because a required database value is missing.";
+    case "PGRST204": {
+      const column = error.message?.match(/'([^']+)' column/)?.[1];
+      return `Career OS could not create this opportunity because Supabase does not recognize the ${column ? `"${column}" ` : ""}field.`;
+    }
     default:
-      return `Career OS could not create this opportunity${code ? ` (database code ${code})` : ""}.`;
+      return `Career OS could not create this opportunity${error.code ? ` (database code ${error.code})` : ""}.`;
   }
 }
 
@@ -257,8 +261,9 @@ export async function createOpportunity(
   }
 
   const opportunityId = randomUUID();
+  const { job_description: jobDescription, ...opportunityValues } = parsed.data;
   const { error } = await supabase.from("opportunities").insert({
-    ...parsed.data,
+    ...opportunityValues,
     id: opportunityId,
     company_id: companyId,
     user_id: userId,
@@ -270,19 +275,37 @@ export async function createOpportunity(
       hint: error.hint,
       message: error.message,
     });
-    return { error: opportunityInsertError(error.code) };
+    return { error: opportunityInsertError(error) };
+  }
+
+  if (jobDescription) {
+    const { error: descriptionError } = await supabase
+      .from("opportunities")
+      .update({ job_description: jobDescription, updated_at: new Date().toISOString() })
+      .eq("id", opportunityId)
+      .eq("user_id", userId);
+    if (descriptionError) {
+      console.error("Opportunity job description update failed", {
+        code: descriptionError.code,
+        details: descriptionError.details,
+        hint: descriptionError.hint,
+        message: descriptionError.message,
+      });
+      await supabase.from("opportunities").delete().eq("id", opportunityId).eq("user_id", userId);
+      return { error: opportunityInsertError(descriptionError) };
+    }
   }
 
   const analysisJson = formData.get("analysis_json");
   if (typeof analysisJson === "string" && analysisJson) {
     try {
       const analysis = jobAnalysisSchema.parse(JSON.parse(analysisJson));
-      if (parsed.data.job_description) {
+      if (jobDescription) {
         await supabase.from("ai_analyses").insert({
           user_id: userId,
           opportunity_id: opportunityId,
           analysis_type: "job_description",
-          input_hash: createHash("sha256").update(parsed.data.job_description).digest("hex"),
+          input_hash: createHash("sha256").update(jobDescription).digest("hex"),
           model: CLOUDFLARE_AI_MODEL,
           result: analysis,
         });
