@@ -261,9 +261,18 @@ export async function createOpportunity(
   }
 
   const opportunityId = randomUUID();
-  const { job_description: jobDescription, ...opportunityValues } = parsed.data;
+  const {
+    job_description: jobDescription,
+    primary_contact_id: primaryContactId,
+    recruiting_firm_id: recruitingFirmId,
+    recruiter_contact_id: recruiterContactId,
+    ...opportunityValues
+  } = parsed.data;
   const { error } = await supabase.from("opportunities").insert({
     ...opportunityValues,
+    ...(primaryContactId ? { primary_contact_id: primaryContactId } : {}),
+    ...(recruitingFirmId ? { recruiting_firm_id: recruitingFirmId } : {}),
+    ...(recruiterContactId ? { recruiter_contact_id: recruiterContactId } : {}),
     id: opportunityId,
     company_id: companyId,
     user_id: userId,
