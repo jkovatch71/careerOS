@@ -1,0 +1,108 @@
+"use client";
+
+import { type FormEvent, useState } from "react";
+import { CheckCircle2, LoaderCircle } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { createClient } from "@/lib/supabase/client";
+
+const MIN_PASSWORD_LENGTH = 8;
+
+export function PasswordChangeForm() {
+  const [password, setPassword] = useState("");
+  const [confirmation, setConfirmation] = useState("");
+  const [working, setWorking] = useState(false);
+  const [message, setMessage] = useState<string>();
+  const [error, setError] = useState<string>();
+
+  async function updatePassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setMessage(undefined);
+    setError(undefined);
+
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(`Use at least ${MIN_PASSWORD_LENGTH} characters for your new password.`);
+      return;
+    }
+
+    if (password !== confirmation) {
+      setError("The passwords do not match.");
+      return;
+    }
+
+    setWorking(true);
+
+    const supabase = createClient();
+    const { error: updateError } = await supabase.auth.updateUser({ password });
+
+    if (updateError) {
+      setError("Career OS could not update your password. Please try again.");
+    } else {
+      setPassword("");
+      setConfirmation("");
+      setMessage("Password updated. You can use it the next time you sign in.");
+    }
+
+    setWorking(false);
+  }
+
+  return (
+    <form className="space-y-5" onSubmit={updatePassword}>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="space-y-2 text-sm font-medium">
+          New password
+          <Input
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            autoComplete="new-password"
+            minLength={MIN_PASSWORD_LENGTH}
+            required
+            disabled={working}
+          />
+        </label>
+        <label className="space-y-2 text-sm font-medium">
+          Confirm new password
+          <Input
+            type="password"
+            value={confirmation}
+            onChange={(event) => setConfirmation(event.target.value)}
+            autoComplete="new-password"
+            minLength={MIN_PASSWORD_LENGTH}
+            required
+            disabled={working}
+          />
+        </label>
+      </div>
+
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-xs text-muted-foreground">
+          Use at least {MIN_PASSWORD_LENGTH} characters.
+        </p>
+        <Button type="submit" disabled={working}>
+          {working ? <LoaderCircle className="size-4 animate-spin" /> : null}
+          Update password
+        </Button>
+      </div>
+
+      {message ? (
+        <div
+          role="status"
+          className="flex items-start gap-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm text-emerald-400"
+        >
+          <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
+          {message}
+        </div>
+      ) : null}
+      {error ? (
+        <p
+          role="alert"
+          className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive"
+        >
+          {error}
+        </p>
+      ) : null}
+    </form>
+  );
+}
