@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { DatabaseBackup, Download, FileJson, FileWarning } from "lucide-react";
+import Link from "next/link";
+import { DatabaseBackup, Download, FileJson, FileSpreadsheet, FileWarning, Upload } from "lucide-react";
 
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,6 +69,24 @@ export default function DataSettingsPage() {
             <Download className="size-4" />
             Download JSON backup
           </a>
+        </CardContent>
+      </Card>
+
+      <Card className="mt-4">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <FileSpreadsheet className="size-4 text-primary" />
+            Company and contact import
+          </CardTitle>
+          <CardDescription>
+            Build your network from a reviewed CSV instead of entering records individually.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Link href="/settings/data/import" className={cn(buttonVariants())}>
+            <Upload className="size-4" />
+            Import companies and contacts
+          </Link>
         </CardContent>
       </Card>
 
