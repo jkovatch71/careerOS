@@ -7,6 +7,7 @@ import {
   BrainCircuit,
   BriefcaseBusiness,
   Building2,
+  DatabaseBackup,
   FileText,
   ListTodo,
   LayoutDashboard,
@@ -30,6 +31,7 @@ const navigation = [
   { name: "AI Workspace", href: "/ai", icon: BrainCircuit, available: true },
   { name: "Analytics", href: "/analytics", icon: BarChart3, available: true },
   { name: "Security", href: "/settings/security", icon: ShieldCheck, available: true },
+  { name: "Data & backup", href: "/settings/data", icon: DatabaseBackup, available: true },
 ] as const;
 
 export function AppNav() {
