@@ -1,7 +1,7 @@
 "use client";
 
 import { type FormEvent, useState } from "react";
-import { CheckCircle2, LoaderCircle } from "lucide-react";
+import { CheckCircle2, Eye, EyeOff, LoaderCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,8 @@ const MIN_PASSWORD_LENGTH = 8;
 export function PasswordChangeForm() {
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const [working, setWorking] = useState(false);
   const [message, setMessage] = useState<string>();
   const [error, setError] = useState<string>();
@@ -50,30 +52,66 @@ export function PasswordChangeForm() {
   return (
     <form className="space-y-5" onSubmit={updatePassword}>
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="space-y-2 text-sm font-medium">
-          New password
-          <Input
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            autoComplete="new-password"
-            minLength={MIN_PASSWORD_LENGTH}
-            required
-            disabled={working}
-          />
-        </label>
-        <label className="space-y-2 text-sm font-medium">
-          Confirm new password
-          <Input
-            type="password"
-            value={confirmation}
-            onChange={(event) => setConfirmation(event.target.value)}
-            autoComplete="new-password"
-            minLength={MIN_PASSWORD_LENGTH}
-            required
-            disabled={working}
-          />
-        </label>
+        <div className="space-y-2">
+          <label htmlFor="new-password" className="text-sm font-medium">
+            New password
+          </label>
+          <div className="relative">
+            <Input
+              id="new-password"
+              className="pr-10"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              autoComplete="new-password"
+              minLength={MIN_PASSWORD_LENGTH}
+              required
+              disabled={working}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="absolute right-0 top-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
+              aria-label={showPassword ? "Hide new password" : "Show new password"}
+              aria-pressed={showPassword}
+              disabled={working}
+              onClick={() => setShowPassword((visible) => !visible)}
+            >
+              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </Button>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <label htmlFor="confirm-new-password" className="text-sm font-medium">
+            Confirm new password
+          </label>
+          <div className="relative">
+            <Input
+              id="confirm-new-password"
+              className="pr-10"
+              type={showConfirmation ? "text" : "password"}
+              value={confirmation}
+              onChange={(event) => setConfirmation(event.target.value)}
+              autoComplete="new-password"
+              minLength={MIN_PASSWORD_LENGTH}
+              required
+              disabled={working}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="absolute right-0 top-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
+              aria-label={showConfirmation ? "Hide password confirmation" : "Show password confirmation"}
+              aria-pressed={showConfirmation}
+              disabled={working}
+              onClick={() => setShowConfirmation((visible) => !visible)}
+            >
+              {showConfirmation ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </Button>
+          </div>
+        </div>
       </div>
 
       <div className="flex items-center justify-between gap-4">
