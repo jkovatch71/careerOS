@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { BrainCircuit, ClipboardPaste, Link2, LoaderCircle, PenLine, RotateCcw } from "lucide-react";
+import { BrainCircuit, ClipboardPaste, FileUp, Link2, LoaderCircle, PenLine, RotateCcw } from "lucide-react";
 
 import {
   analyzeOpportunityIntake,
@@ -16,7 +16,7 @@ import { OpportunityForm } from "./opportunity-form";
 
 const initialState: OpportunityIntakeState = {};
 
-type IntakeMode = "url" | "paste" | "manual";
+type IntakeMode = "url" | "paste" | "pdf" | "manual";
 
 export function OpportunityIntakeForm({
   companies,
@@ -26,6 +26,7 @@ export function OpportunityIntakeForm({
   contacts: Pick<Contact, "id" | "name" | "company_id" | "contact_type">[];
 }) {
   const [mode, setMode] = useState<IntakeMode>("url");
+  const [pdfName, setPdfName] = useState<string>();
   const [state, action, pending] = useActionState(analyzeOpportunityIntake, initialState);
 
   if (state.status === "success" && state.draft) {
@@ -74,7 +75,7 @@ export function OpportunityIntakeForm({
 
   return (
     <div>
-      <div className="grid grid-cols-3 gap-2 rounded-lg bg-muted/35 p-1">
+      <div className="grid grid-cols-4 gap-2 rounded-lg bg-muted/35 p-1">
         <button
           type="button"
           onClick={() => setMode("url")}
@@ -99,6 +100,17 @@ export function OpportunityIntakeForm({
         </button>
         <button
           type="button"
+          onClick={() => setMode("pdf")}
+          className={cn(
+            "flex h-10 items-center justify-center gap-2 rounded-md px-3 text-sm transition-colors",
+            mode === "pdf" ? "bg-background font-medium shadow-sm" : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <FileUp className="size-4" />
+          Upload PDF
+        </button>
+        <button
+          type="button"
           onClick={() => setMode("manual")}
           className="flex h-10 items-center justify-center gap-2 rounded-md px-3 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
@@ -109,24 +121,28 @@ export function OpportunityIntakeForm({
 
       <form action={action} className="mt-6 space-y-5">
         <input type="hidden" name="input_mode" value={mode} />
-        <div className="space-y-2">
-          <Label htmlFor="intake_job_url">
-            Job posting URL {mode === "paste" ? <span className="font-normal text-muted-foreground">(optional)</span> : null}
-          </Label>
-          <Input
-            id="intake_job_url"
-            name="job_url"
-            type="url"
-            placeholder="https://..."
-            required={mode === "url"}
-            autoFocus={mode === "url"}
-          />
-          {mode === "url" ? (
-            <p className="text-xs leading-5 text-muted-foreground">
-              Career OS will attempt to read the public page. LinkedIn, Workday, and some other sites may require you to paste the posting instead.
-            </p>
-          ) : null}
-        </div>
+        {mode === "url" || mode === "paste" ? (
+          <div className="space-y-2">
+            <Label htmlFor="intake_job_url">
+              Job posting URL {mode === "paste" ? <span className="font-normal text-muted-foreground">(optional)</span> : null}
+            </Label>
+            <Input
+              id="intake_job_url"
+              name="job_url"
+              type="url"
+              placeholder="https://..."
+              required={mode === "url"}
+              autoFocus={mode === "url"}
+            />
+            {mode === "url" ? (
+              <p className="text-xs leading-5 text-muted-foreground">
+                Career OS will attempt to read the public page. LinkedIn, Workday, and some other sites may require you to paste the posting instead.
+              </p>
+            ) : null}
+          </div>
+        ) : (
+          <input type="hidden" name="job_url" value="" />
+        )}
 
         {mode === "paste" ? (
           <div className="space-y-2">
@@ -146,9 +162,41 @@ export function OpportunityIntakeForm({
               The original posting will be stored separately from your personal notes.
             </p>
           </div>
+        ) : mode === "pdf" ? (
+          <div className="space-y-2">
+            <Label htmlFor="job_description_pdf">Job-description PDF</Label>
+            <input
+              id="job_description_pdf"
+              name="job_description_pdf"
+              type="file"
+              accept=".pdf,application/pdf"
+              required
+              autoFocus
+              onChange={(event) => setPdfName(event.target.files?.[0]?.name)}
+              className="peer sr-only"
+            />
+            <label
+              htmlFor="job_description_pdf"
+              className="flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed bg-muted/10 px-4 py-7 text-center transition-colors hover:border-primary/50 hover:bg-muted/20 peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring"
+            >
+              <span className="flex size-10 items-center justify-center rounded-lg border bg-background">
+                <FileUp className="size-4 text-primary" />
+              </span>
+              <span className="mt-3 text-sm font-medium">
+                {pdfName ?? "Choose a recruiter job-description PDF"}
+              </span>
+              <span className="mt-1 text-xs text-muted-foreground">
+                {pdfName ? "Choose another file" : "Text-based PDF · Maximum 3 MB"}
+              </span>
+            </label>
+            <p className="text-xs leading-5 text-muted-foreground">
+              The PDF is read securely for this draft and is not retained. Scanned image-only PDFs are not supported.
+            </p>
+          </div>
         ) : (
           <input type="hidden" name="job_description" value="" />
         )}
+        {mode === "pdf" ? <input type="hidden" name="job_description" value="" /> : null}
 
         {state.status === "error" ? (
           <p role="alert" className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">

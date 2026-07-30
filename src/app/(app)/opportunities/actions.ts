@@ -9,6 +9,7 @@ import { jobAnalysisSchema, type JobAnalysis } from "@/features/ai/job-descripti
 import { createOpportunityIntakeDraft } from "@/features/opportunities/opportunity-intake";
 import { opportunitySchema } from "@/features/opportunities/schemas";
 import { CLOUDFLARE_AI_MODEL } from "@/lib/ai/cloudflare";
+import { extractJobDescriptionPdf } from "@/lib/job-postings/extract-pdf";
 import { fetchJobPostingText } from "@/lib/job-postings/fetch-posting";
 import { createClient } from "@/lib/supabase/server";
 
@@ -81,7 +82,7 @@ async function authenticatedUser() {
 
 const intakeInputSchema = z
   .object({
-    inputMode: z.enum(["url", "paste"]),
+    inputMode: z.enum(["url", "paste", "pdf"]),
     jobUrl: z
       .union([z.literal(""), z.url("Enter a complete job-posting URL.")])
       .transform((value) => value || null),
@@ -122,7 +123,9 @@ export async function analyzeOpportunityIntake(
     const jobDescription =
       parsed.data.inputMode === "url" && parsed.data.jobUrl
         ? await fetchJobPostingText(parsed.data.jobUrl)
-        : parsed.data.jobDescription;
+        : parsed.data.inputMode === "pdf"
+          ? await extractJobDescriptionPdf(formData.get("job_description_pdf"))
+          : parsed.data.jobDescription;
     const { draft, analysis } = await createOpportunityIntakeDraft(
       jobDescription,
       parsed.data.jobUrl ?? undefined,
@@ -158,7 +161,9 @@ export async function analyzeOpportunityIntake(
     const fallbackMessage =
       parsed.data.inputMode === "url"
         ? "Career OS could not read that posting. Switch to Paste posting and copy the full description."
-        : "Career OS could not analyze that posting. Please review the text and try again.";
+        : parsed.data.inputMode === "pdf"
+          ? "Career OS could not read that PDF. Try a text-based PDF or paste the job description instead."
+          : "Career OS could not analyze that posting. Please review the text and try again.";
     return {
       status: "error",
       message: error instanceof Error && !error.message.includes("fetch")

@@ -21,7 +21,7 @@ export default async function NewOpportunityPage() {
       <Card className="mt-5">
         <CardHeader>
           <CardTitle>New opportunity</CardTitle>
-          <CardDescription>Start with a job link or pasted posting, then review the AI-extracted details before anything is saved.</CardDescription>
+          <CardDescription>Start with a job link, pasted posting, or recruiter PDF, then review the AI-extracted details before anything is saved.</CardDescription>
         </CardHeader>
         <CardContent><OpportunityIntakeForm companies={companies ?? []} contacts={contacts ?? []} /></CardContent>
       </Card>
